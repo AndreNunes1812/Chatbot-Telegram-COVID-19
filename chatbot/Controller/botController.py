@@ -1,19 +1,46 @@
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
+from haversine import haversine, Unit
+from Model.unidades import unidades
 from pprint import pprint
-import telepot
 from time import sleep
+import operator
+import telepot
+
 
 bot = telepot.Bot('1144643679:AAG1InJQ0uYGGKemveL1eixUuR3DazLhPDQ')
 
 
 def receive_message(msg):
     """ Recebe e trata a Mensagem """
+    content_type, chat_type, chat_id = telepot.glance(msg)
 
     # Imprime a msg em JSON para feedback no terminal
-    print(get_message_text(msg))
-    if(get_message_text(msg).lower() == "/start"):
+    if((content_type == 'text') and (msg['text'].lower() == "/start")):
         menu_bot_chat(msg)
+    elif(content_type == 'location'):
+        location_user = (msg["location"]["latitude"],
+                         msg["location"]["longitude"])
+        print(location_user)
+        result_distances = []
+
+        for key in unidades:
+            result_distances = {}
+            for key in unidades:
+                result_distances[key] = haversine((unidades[key]["latitude"], unidades[key]
+                                                   ["longitude"]), location_user)
+
+        result_distances = sorted(
+            result_distances.items(), key=operator.itemgetter(1))
+        bot.sendMessage(msg['chat']['id'], "A Unidade mais perto de você é a " +
+                        str(str(result_distances[0][0])))
+        bot.sendLocation(
+            chat_id=msg['chat']['id'],
+            latitude=unidades[result_distances[0][0]]["latitude"],
+            longitude=unidades[result_distances[0][0]]['longitude']
+        )
     else:
+        print(content_type)
+        pprint(msg)
         pass
 
 
@@ -44,17 +71,23 @@ def on_callback_query(msg):
     if(query_data == "COMEÇAR pressed"):
         # DADOS PESSOAIS
         idade_user(msg)
-    elif((query_data == "SEXO_MASCULINO pressed")or(query_data == "SEXO_FEMININO pressed")):
+    if((query_data == "SEXO_MASCULINO pressed")or(query_data == "SEXO_FEMININO pressed")):
         doencas_user(msg)
-    elif((query_data == "DOENCAS_SIM pressed")or(query_data == "DOENCAS_NAO pressed")):
+    if((query_data == "DOENCAS_SIM pressed")or(query_data == "DOENCAS_NAO pressed")):
         sintomas_user(msg)
-    elif((query_data == "SINTOMAS_SIM pressed")or(query_data == "SINTOMAS_NAO pressed")):
+    if((query_data == "SINTOMAS_SIM pressed")or(query_data == "SINTOMAS_NAO pressed")):
         historico01_user(msg)
-    elif((query_data == "HISTORICO01_SIM pressed")or(query_data == "HISTORICO01_NAO pressed")):
+    if((query_data == "HISTORICO01_SIM pressed")or(query_data == "HISTORICO01_NAO pressed")):
         historico02_user(msg)
-    elif((query_data == "HISTORICO02_SIM pressed")or(query_data == "HISTORICO02_NAO pressed")):
+    if((query_data == "HISTORICO02_SIM pressed")or(query_data == "HISTORICO02_NAO pressed")):
+        unidade_user(msg)
+
+    if(query_data == "UNIDADE MAIS PROXIMA pressed"):
         bot.sendMessage(msg['message']['chat']['id'],
-                        "Obrigado por responder! 🙂")
+                        "Obtenha a unidade mais próxima de você, envie-me sua localização atual! 😁")
+
+    else:
+        pass
 
 
 def menu_bot_chat(msg):
@@ -99,19 +132,17 @@ def doencas_user(msg):
             text="SIM", callback_data="DOENCAS_SIM pressed"),
          InlineKeyboardButton(text="NÃO", callback_data="DOENCAS_NAO pressed")]])
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Você possui alguma dessas doenças crônicas ou se encaixa nesses quesitos? 🤔")
-    bot.sendMessage(
-        msg['message']['chat']['id'],
-        "\nDiabetes\n" +
-        "Hipertensão\n" +
-        "Insuficiência Cardíaca\n" +
-        "Doença Pulmonar Obstrutiva\n" +
-        "Asma Grave\n" +
-        "HIV\n" +
-        "Câncer\n" +
-        "Transplantados de qualquer orgão\n" +
-        "Usuários de medicação imunosupressora", reply_markup=keyboard
-    )
+                    "Você possui alguma dessas doenças crônicas ou se encaixa nesses quesitos? 🤔\n" +
+                    "\nDiabetes\n" +
+                    "Hipertensão\n" +
+                    "Insuficiência Cardíaca\n" +
+                    "Doença Pulmonar Obstrutiva\n" +
+                    "Asma Grave\n" +
+                    "HIV\n" +
+                    "Câncer\n" +
+                    "Transplantados de qualquer orgão\n" +
+                    "Usuários de medicação imunosupressora", reply_markup=keyboard
+                    )
 
 
 def sintomas_user(msg):
@@ -120,18 +151,16 @@ def sintomas_user(msg):
             text="SIM", callback_data="SINTOMAS_SIM pressed"),
          InlineKeyboardButton(text="NÃO", callback_data="SINTOMAS_NAO pressed")]])
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Ultimamente você tem apresentado algum desses sintomas? 🤔")
-    bot.sendMessage(
-        msg['message']['chat']['id'],
-        "\nCoriza\n" +
-        "Dor de garganta\n" +
-        "Tosse\n" +
-        "Dor de cabeça\n" +
-        "Febre\n" +
-        "Mal Estar em Geral\n" +
-        "Dificuldade para respirar\n" +
-        "Diarreia", reply_markup=keyboard
-    )
+                    "Ultimamente você tem apresentado algum desses sintomas? 🤔\n" +
+                    "\nCoriza\n" +
+                    "Dor de garganta\n" +
+                    "Tosse\n" +
+                    "Dor de cabeça\n" +
+                    "Febre\n" +
+                    "Mal Estar em Geral\n" +
+                    "Dificuldade para respirar\n" +
+                    "Diarreia", reply_markup=keyboard
+                    )
 
 
 def historico01_user(msg):
@@ -141,7 +170,7 @@ def historico01_user(msg):
          InlineKeyboardButton(text="NÃO", callback_data="HISTORICO01_NAO pressed")]])
     bot.sendMessage(
         msg['message']['chat']['id'],
-        "\nTeve contato próximo com caso suspeito de Coronavírus?", reply_markup=keyboard
+        "Teve contato próximo com caso suspeito de Coronavírus?", reply_markup=keyboard
     )
 
 
@@ -152,5 +181,16 @@ def historico02_user(msg):
          InlineKeyboardButton(text="NÃO", callback_data="HISTORICO02_NAO pressed")]])
     bot.sendMessage(
         msg['message']['chat']['id'],
-        "\nTeve contato próximo com caso confirmado de Coronavírus?", reply_markup=keyboard
+        "Teve contato próximo com caso confirmado de Coronavírus?", reply_markup=keyboard
     )
+
+
+def unidade_user(msg):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="UNIDADE MAIS PROXIMA",
+                              callback_data="UNIDADE MAIS PROXIMA pressed")]
+    ])
+
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "Obrigado por responder!, deixe-me encontrar a unidade atendimento mais próxima de você 😁",
+                    reply_markup=keyboard)
