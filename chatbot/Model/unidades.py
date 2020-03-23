@@ -1,4 +1,4 @@
-unidades = {
+ubs = {
     "Ubs José Rayol dos Santos": {"latitude": -3.087224, "longitude": -60.026544},
     "Ubs Morro da Liberdade": {"latitude": -3.135130, "longitude": -60.000128},
     "Ubs Deodato de Miranda Leão": {"latitude": -3.119730, "longitude": -60.036589},
