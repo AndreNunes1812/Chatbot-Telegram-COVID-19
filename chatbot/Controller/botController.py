@@ -67,24 +67,24 @@ def on_callback_query(msg):
         msg, flavor='callback_query')
 
     print("Callback Query: ", query_data)
-
     if(query_data == "COMEÇAR pressed"):
         # DADOS PESSOAIS
-        idade_user(msg)
+        bot.answerCallbackQuery(query_id, idade_user(msg))
     if((query_data == "SEXO_MASCULINO pressed")or(query_data == "SEXO_FEMININO pressed")):
-        doencas_user(msg)
+        bot.answerCallbackQuery(query_id, doencas_user(msg))
     if((query_data == "DOENCAS_SIM pressed")or(query_data == "DOENCAS_NAO pressed")):
-        sintomas_user(msg)
+        bot.answerCallbackQuery(query_id, sintomas_user(msg))
     if((query_data == "SINTOMAS_SIM pressed")or(query_data == "SINTOMAS_NAO pressed")):
-        historico01_user(msg)
+        bot.answerCallbackQuery(query_id, historico01_user(msg))
     if((query_data == "HISTORICO01_SIM pressed")or(query_data == "HISTORICO01_NAO pressed")):
-        historico02_user(msg)
+        bot.answerCallbackQuery(query_id, historico02_user(msg))
     if((query_data == "HISTORICO02_SIM pressed")or(query_data == "HISTORICO02_NAO pressed")):
-        unidade_user(msg)
+        bot.answerCallbackQuery(query_id, unidade_user(msg))
 
     if(query_data == "UNIDADE MAIS PROXIMA pressed"):
-        bot.sendMessage(msg['message']['chat']['id'],
-                        "Obtenha a unidade mais próxima de você, envie-me sua localização atual! 😁")
+        bot.answerCallbackQuery(query_id, bot.sendMessage(msg['message']['chat']['id'],
+                                                          "Vá em *Anexo > Localização*, e envie-me sua *Localização Atual*! 😁",
+                                                          parse_mode="Markdown",))
 
     else:
         pass
@@ -132,16 +132,17 @@ def doencas_user(msg):
             text="SIM", callback_data="DOENCAS_SIM pressed"),
          InlineKeyboardButton(text="NÃO", callback_data="DOENCAS_NAO pressed")]])
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Você possui alguma dessas doenças crônicas ou se encaixa nesses quesitos? 🤔\n" +
-                    "\nDiabetes\n" +
-                    "Hipertensão\n" +
-                    "Insuficiência Cardíaca\n" +
-                    "Doença Pulmonar Obstrutiva\n" +
-                    "Asma Grave\n" +
-                    "HIV\n" +
-                    "Câncer\n" +
-                    "Transplantados de qualquer orgão\n" +
-                    "Usuários de medicação imunosupressora", reply_markup=keyboard
+                    "Você possui alguma dessas *Doenças crônicas* ou se encaixa nesses quesitos? 🤔\n" +
+                    "\n*Diabetes*\n" +
+                    "*Hipertensão*\n" +
+                    "*Insuficiência Cardíaca*\n" +
+                    "*Doença Pulmonar Obstrutiva*\n" +
+                    "*Asma Grave*\n" +
+                    "*HIV*\n" +
+                    "*Câncer*\n" +
+                    "*Transplantados de qualquer orgão*\n" +
+                    "*Usuários de medicação imunosupressora*",
+                    parse_mode="Markdown", reply_markup=keyboard
                     )
 
 
@@ -152,14 +153,15 @@ def sintomas_user(msg):
          InlineKeyboardButton(text="NÃO", callback_data="SINTOMAS_NAO pressed")]])
     bot.sendMessage(msg['message']['chat']['id'],
                     "Ultimamente você tem apresentado algum desses sintomas? 🤔\n" +
-                    "\nCoriza\n" +
-                    "Dor de garganta\n" +
-                    "Tosse\n" +
-                    "Dor de cabeça\n" +
-                    "Febre\n" +
-                    "Mal Estar em Geral\n" +
-                    "Dificuldade para respirar\n" +
-                    "Diarreia", reply_markup=keyboard
+                    "\n*Coriza*\n" +
+                    "*Dor de garganta*\n" +
+                    "*Tosse*\n" +
+                    "*Dor de cabeça*\n" +
+                    "*Febre*\n" +
+                    "*Mal Estar em Geral*\n" +
+                    "*Dificuldade para respirar*\n" +
+                    "*Diarreia*",
+                    parse_mode="Markdown", reply_markup=keyboard
                     )
 
 
