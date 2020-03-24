@@ -5,10 +5,12 @@ from pprint import pprint
 from time import sleep
 import operator
 import telepot
+import re
 
 
 bot = telepot.Bot('820651983:AAEjeM1axbVkn2DPu6kFf7WhvoK8fk_d5eE')
 gravidade = 0
+
 
 def get_chat_id(msg):
     """ Retorna o ID do Chat """
@@ -29,13 +31,14 @@ def get_user_name(msg):
 
 
 def receive_message(msg):
+    global gravidade
     """ Recebe e trata a Mensagem """
     content_type, chat_type, chat_id = telepot.glance(msg)
 
     # Imprime a msg em JSON para feedback no terminal
     if((content_type == 'text') and (msg['text'].lower() == "/start")):
         menu_bot_chat(msg)
-    if(content_type == 'location'):
+    if((content_type == 'location')and(gravidade >= 6)):
         location_user = (msg["location"]["latitude"],
                          msg["location"]["longitude"])
         print("Localizacao do user: ", location_user)
@@ -57,12 +60,19 @@ def receive_message(msg):
             latitude=ubs[result_distances[0][0]]["latitude"],
             longitude=ubs[result_distances[0][0]]['longitude']
         )
+    if((content_type == 'text') and (msg['text'].lower() != "/start")):
+        txt = msg["text"]
+        x = re.findall("\d\d", txt)
+        x = int(x[0])
+        print("Idade do cara: ", x)
+        if(x >= 50):
+            gravidade += 2
     else:
-        pprint(msg)
         pass
 
 
 def on_callback_query(msg):
+    global gravidade
     query_id, from_id, query_data = telepot.glance(
         msg, flavor='callback_query')
 
@@ -72,20 +82,36 @@ def on_callback_query(msg):
     if((query_data == "SEXO_MASCULINO pressed")or(query_data == "SEXO_FEMININO pressed")):
         bot.answerCallbackQuery(query_id, doencas_user(msg))
     if((query_data == "DOENCAS_SIM pressed")or(query_data == "DOENCAS_NAO pressed")):
+        if(query_data == "DOENCAS_SIM pressed"):
+            gravidade += 2
         bot.answerCallbackQuery(query_id, sintomas_user(msg))
     if((query_data == "SINTOMAS_SIM pressed")or(query_data == "SINTOMAS_NAO pressed")):
+        if(query_data == "SINTOMAS_SIM pressed"):
+            gravidade += 2
         bot.answerCallbackQuery(query_id, historico01_user(msg))
     if((query_data == "HISTORICO01_SIM pressed")or(query_data == "HISTORICO01_NAO pressed")):
+        if(query_data == "HISTORICO01_SIM pressed"):
+            gravidade += 2
         bot.answerCallbackQuery(query_id, historico02_user(msg))
     if((query_data == "HISTORICO02_SIM pressed")or(query_data == "HISTORICO02_NAO pressed")):
-        bot.answerCallbackQuery(query_id, unidade_user(msg))
+        if((query_data == "HISTORICO02_SIM pressed")or(gravidade >= 6)):
+            gravidade += 6
+            bot.answerCallbackQuery(query_id, unidade_user(msg))
+        else:
+            bot.editMessageReplyMarkup(telepot.message_identifier(
+                msg["message"]), reply_markup=None)
+            bot.answerCallbackQuery(query_id, bot.sendMessage(msg['message']['chat']['id'],
+                                                              "Obrigado por responder!\nPor favor fique de quarentena em sua casa 😁",
+                                                              parse_mode="Markdown")
+                                    )
 
     if(query_data == "UNIDADE MAIS PROXIMA pressed"):
-        bot.editMessageReplyMarkup(telepot.message_identifier(msg["message"]), reply_markup=None)
+        bot.editMessageReplyMarkup(telepot.message_identifier(
+            msg["message"]), reply_markup=None)
         bot.answerCallbackQuery(query_id,
                                 bot.sendMessage(msg['message']['chat']['id'],
                                                 "Vá em *Anexo > Localização*, e envie-me sua *Localização Atual*. 😁",
-                                                parse_mode="Markdown",)
+                                                parse_mode="Markdown")
                                 )
 
     else:
@@ -109,12 +135,13 @@ def menu_bot_chat(msg):
         "Quando estiver pronto, aperte em *COMEÇAR* 😁",
         parse_mode="Markdown",
         reply_markup=keyboard)
-    
+
     gravidade = 0
 
 
 def idade_user(msg):
-    bot.editMessageReplyMarkup(telepot.message_identifier(msg["message"]), reply_markup=None)
+    bot.editMessageReplyMarkup(telepot.message_identifier(
+        msg["message"]), reply_markup=None)
     bot.sendMessage(msg['message']['chat']['id'],
                     "Poderia me informar sua idade em anos? 🤔")
     sleep(11)
@@ -131,7 +158,8 @@ def sexo_user(msg):
 
 
 def doencas_user(msg):
-    bot.editMessageReplyMarkup(telepot.message_identifier(msg["message"]), reply_markup=None)
+    bot.editMessageReplyMarkup(telepot.message_identifier(
+        msg["message"]), reply_markup=None)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
             text="SIM", callback_data="DOENCAS_SIM pressed"),
@@ -152,7 +180,8 @@ def doencas_user(msg):
 
 
 def sintomas_user(msg):
-    bot.editMessageReplyMarkup(telepot.message_identifier(msg["message"]), reply_markup=None)
+    bot.editMessageReplyMarkup(telepot.message_identifier(
+        msg["message"]), reply_markup=None)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
             text="SIM", callback_data="SINTOMAS_SIM pressed"),
@@ -172,7 +201,8 @@ def sintomas_user(msg):
 
 
 def historico01_user(msg):
-    bot.editMessageReplyMarkup(telepot.message_identifier(msg["message"]), reply_markup=None)
+    bot.editMessageReplyMarkup(telepot.message_identifier(
+        msg["message"]), reply_markup=None)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
             text="SIM", callback_data="HISTORICO01_SIM pressed"),
@@ -184,7 +214,8 @@ def historico01_user(msg):
 
 
 def historico02_user(msg):
-    bot.editMessageReplyMarkup(telepot.message_identifier(msg["message"]), reply_markup=None)
+    bot.editMessageReplyMarkup(telepot.message_identifier(
+        msg["message"]), reply_markup=None)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
             text="SIM", callback_data="HISTORICO02_SIM pressed"),
@@ -196,7 +227,8 @@ def historico02_user(msg):
 
 
 def unidade_user(msg):
-    bot.editMessageReplyMarkup(telepot.message_identifier(msg["message"]), reply_markup=None)
+    bot.editMessageReplyMarkup(telepot.message_identifier(
+        msg["message"]), reply_markup=None)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="BUSCAR UNIDADE MAIS PRÓXIMA",
                               callback_data="UNIDADE MAIS PROXIMA pressed")]
