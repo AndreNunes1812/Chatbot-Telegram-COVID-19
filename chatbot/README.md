@@ -1,4 +1,4 @@
 # chatbot
 
-pip install telepot
-python3 .\main.py
+<code>pip install telepot<code>
+<code>python3 .\main.py<code>

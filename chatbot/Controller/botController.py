@@ -1,3 +1,4 @@
+from csv import DictWriter
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 from haversine import haversine, Unit
 from Model.unidades import ubs
@@ -5,11 +6,25 @@ from pprint import pprint
 from time import sleep
 import operator
 import telepot
+import csv
 import re
 
 
 bot = telepot.Bot('820651983:AAEjeM1axbVkn2DPu6kFf7WhvoK8fk_d5eE')
+user = {}
 gravidade = 0
+fieldnames = ["nome", "idade", "genero",
+              "sintomas", "grau", "latitude", "longitude"]
+
+
+def append_dict_as_row(file_name, dict_of_elem, field_names):
+    # Open file in append mode
+    with open(file_name, 'a+', newline='') as write_obj:
+        # Create a writer object from csv module
+        dict_writer = DictWriter(write_obj, fieldnames=field_names)
+        # Add dictionary as wor in the csv
+        dict_writer.writerow(dict_of_elem)
+#{'nome': 'Erik', 'idade': 68, 'genero': 'F', 'sintomas': 'S', 'grau': 'ALTO', 'latitude': -3.041709, 'longitude': -59.99728}
 
 
 def get_chat_id(msg):
@@ -32,6 +47,8 @@ def get_user_name(msg):
 
 def receive_message(msg):
     global gravidade
+    global user
+    global fieldnames
     """ Recebe e trata a Mensagem """
     content_type, chat_type, chat_id = telepot.glance(msg)
 
@@ -39,6 +56,16 @@ def receive_message(msg):
     if((content_type == 'text') and (msg['text'].lower() == "/start")):
         menu_bot_chat(msg)
     if((content_type == 'location')and(gravidade >= 6)):
+        if(gravidade <= 4):
+            user["grau"] = "BAIXO"
+        if((gravidade > 4) and (gravidade <= 5)):
+            user["grau"] = "MEDIO"
+        if(gravidade > 5):
+            user["grau"] = "ALTO"
+
+        user["latitude"] = msg["location"]["latitude"]
+        user["longitude"] = msg["location"]["longitude"]
+
         location_user = (msg["location"]["latitude"],
                          msg["location"]["longitude"])
         print("Localizacao do user: ", location_user)
@@ -60,19 +87,25 @@ def receive_message(msg):
             latitude=ubs[result_distances[0][0]]["latitude"],
             longitude=ubs[result_distances[0][0]]['longitude']
         )
+
+        print(user)
+        append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
+
     if((content_type == 'text') and (msg['text'].lower() != "/start")):
         txt = msg["text"]
         x = re.findall("\d\d", txt)
-        x = int(x[0])
-        print("Idade do cara: ", x)
-        if(x >= 50):
+        user["idade"] = int(x[0])
+        if(int(x[0]) >= 50):
             gravidade += 2
+        else:
+            gravidade += 1
     else:
         pass
 
 
 def on_callback_query(msg):
     global gravidade
+
     query_id, from_id, query_data = telepot.glance(
         msg, flavor='callback_query')
 
@@ -80,22 +113,29 @@ def on_callback_query(msg):
     if(query_data == "COMEÇAR pressed"):
         bot.answerCallbackQuery(query_id, idade_user(msg))
     if((query_data == "SEXO_MASCULINO pressed")or(query_data == "SEXO_FEMININO pressed")):
+        if(query_data == "SEXO_MASCULINO pressed"):
+            user["genero"] = "M"
+        if(query_data == "SEXO_MASCULINO pressed"):
+            user["genero"] = "F"
         bot.answerCallbackQuery(query_id, doencas_user(msg))
     if((query_data == "DOENCAS_SIM pressed")or(query_data == "DOENCAS_NAO pressed")):
         if(query_data == "DOENCAS_SIM pressed"):
-            gravidade += 2
+            gravidade += 1
         bot.answerCallbackQuery(query_id, sintomas_user(msg))
     if((query_data == "SINTOMAS_SIM pressed")or(query_data == "SINTOMAS_NAO pressed")):
         if(query_data == "SINTOMAS_SIM pressed"):
-            gravidade += 2
+            user["sintomas"] = "S"
+            gravidade += 3
+        else:
+            user["sintomas"] = "N"
         bot.answerCallbackQuery(query_id, historico01_user(msg))
     if((query_data == "HISTORICO01_SIM pressed")or(query_data == "HISTORICO01_NAO pressed")):
         if(query_data == "HISTORICO01_SIM pressed"):
             gravidade += 2
         bot.answerCallbackQuery(query_id, historico02_user(msg))
     if((query_data == "HISTORICO02_SIM pressed")or(query_data == "HISTORICO02_NAO pressed")):
-        if((query_data == "HISTORICO02_SIM pressed")or(gravidade >= 6)):
-            gravidade += 6
+        if((query_data == "HISTORICO02_SIM pressed")or(gravidade >= 5)):
+            gravidade += 3
             bot.answerCallbackQuery(query_id, unidade_user(msg))
         else:
             bot.editMessageReplyMarkup(telepot.message_identifier(
@@ -119,6 +159,7 @@ def on_callback_query(msg):
 
 
 def menu_bot_chat(msg):
+    global user
     """ Função de Menu do Bot """
 
     # Cria keyboard do menu do bot
@@ -136,6 +177,7 @@ def menu_bot_chat(msg):
         parse_mode="Markdown",
         reply_markup=keyboard)
 
+    user["nome"] = get_user_name(msg)
     gravidade = 0
 
 
