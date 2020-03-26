@@ -1,7 +1,7 @@
 from csv import DictWriter
-from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
+from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 from haversine import haversine, Unit
-from Model.unidades import ubs
+from Model.unidades_atendimento import ubs, hospitais
 from pprint import pprint
 from time import sleep
 import operator
@@ -60,43 +60,62 @@ def receive_message(msg):
             user["grau"] = "BAIXO"
         if((gravidade > 4) and (gravidade <= 5)):
             user["grau"] = "MEDIO"
+            user["latitude"] = msg["location"]["latitude"]
+            user["longitude"] = msg["location"]["longitude"]
+
+            location_user = (msg["location"]["latitude"],
+                             msg["location"]["longitude"])
+            print("Localizacao do user: ", location_user)
+            result_distances = []
+
+            for key in ubs:
+                result_distances = {}
+                for key in ubs:
+                    result_distances[key] = haversine((ubs[key]["latitude"], ubs[key]
+                                                       ["longitude"]), location_user)
+
+            result_distances = sorted(
+                result_distances.items(), key=operator.itemgetter(1))
+            bot.sendMessage(msg['chat']['id'],
+                            "*Unidade de atendimento* mais perto de você:",
+                            parse_mode="Markdown")
+
+            bot.sendVenue(
+                chat_id=msg['chat']['id'],
+                latitude=ubs[result_distances[0][0]]["latitude"],
+                longitude=ubs[result_distances[0][0]]['longitude'],
+                title=str(result_distances[0][0]).upper(),
+                address=str(ubs[result_distances[0][0]]["end"]),
+                foursquare_id=None
+            )
+            append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
         if(gravidade > 5):
             user["grau"] = "ALTO"
+            user["latitude"] = msg["location"]["latitude"]
+            user["longitude"] = msg["location"]["longitude"]
 
-        user["latitude"] = msg["location"]["latitude"]
-        user["longitude"] = msg["location"]["longitude"]
+            bot.sendMessage(msg['chat']['id'],
+                            "*Unidade de atendimento* mais perto de você:",
+                            parse_mode="Markdown")
 
-        location_user = (msg["location"]["latitude"],
-                         msg["location"]["longitude"])
-        print("Localizacao do user: ", location_user)
-        result_distances = []
-
-        for key in ubs:
-            result_distances = {}
-            for key in ubs:
-                result_distances[key] = haversine((ubs[key]["latitude"], ubs[key]
-                                                   ["longitude"]), location_user)
-
-        result_distances = sorted(
-            result_distances.items(), key=operator.itemgetter(1))
-        bot.sendMessage(msg['chat']['id'], "A unidade mais perto de você é a\n🏥" +
-                        " **" + str(result_distances[0][0]).upper() + "** ",
-                        parse_mode="Markdown")
-        bot.sendLocation(
-            chat_id=msg['chat']['id'],
-            latitude=ubs[result_distances[0][0]]["latitude"],
-            longitude=ubs[result_distances[0][0]]['longitude']
-        )
-
-        print(user)
-        append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
+            bot.sendVenue(
+                chat_id=msg['chat']['id'],
+                latitude=hospitais["Hospital Delphina Rinaldi Abdel Aziz"]["latitude"],
+                longitude=hospitais["Hospital Delphina Rinaldi Abdel Aziz"]['longitude'],
+                title=str("Hospital Delphina Rinaldi Abdel Aziz").upper(),
+                address=str(
+                    hospitais["Hospital Delphina Rinaldi Abdel Aziz"]["end"]),
+                foursquare_id=None
+            )
+            append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
 
     if((content_type == 'text') and (msg['text'].lower() != "/start")):
         txt = msg["text"]
         x = re.findall("\d\d", txt)
         user["idade"] = int(x[0])
-        if(int(x[0]) >= 50):
-            gravidade += 2
+        if((int(x[0]) >= 15)and(int(x[0]) <= 80)):
+            if(int(x[0]) >= 50):
+                gravidade += 2
         else:
             gravidade += 1
     else:
@@ -141,7 +160,14 @@ def on_callback_query(msg):
             bot.editMessageReplyMarkup(telepot.message_identifier(
                 msg["message"]), reply_markup=None)
             bot.answerCallbackQuery(query_id, bot.sendMessage(msg['message']['chat']['id'],
-                                                              "Obrigado por responder!\nPor favor fique de quarentena em sua casa 😁",
+                                                              "Obrigado por responder!😁\n" +
+                                                              "Não esqueça de:\n\n" +
+                                                              "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
+                                                              "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
+                                                              "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
+                                                              "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
+                                                              "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
+                                                              "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
                                                               parse_mode="Markdown")
                                     )
 
@@ -172,8 +198,8 @@ def menu_bot_chat(msg):
     bot.sendMessage(
         get_chat_id(msg),
         text="Seja Bem-vindo *" + get_user_name(msg) + "*" +
-        "\nEu sou 🤖*Covidbot* e vou realizar sua *Triagem Virtual*, e para isso irei fazer uma *série de perguntas* para você.\n\n" +
-        "Quando estiver pronto, aperte em *COMEÇAR* 😁",
+        "\nEu sou o *🤖CovidBot da UEA* e vou realizar a sua *Triagem Virtual.*\nPara isso irei fazer uma série de perguntas para você.\n" +
+        "\nQuando estiver pronto, aperte em *COMEÇAR* 😁",
         parse_mode="Markdown",
         reply_markup=keyboard)
 
@@ -184,6 +210,7 @@ def menu_bot_chat(msg):
 def idade_user(msg):
     bot.editMessageReplyMarkup(telepot.message_identifier(
         msg["message"]), reply_markup=None)
+
     bot.sendMessage(msg['message']['chat']['id'],
                     "Poderia me informar sua idade em anos? 🤔")
     sleep(11)
@@ -207,7 +234,7 @@ def doencas_user(msg):
             text="SIM", callback_data="DOENCAS_SIM pressed"),
          InlineKeyboardButton(text="NÃO", callback_data="DOENCAS_NAO pressed")]])
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Você possui alguma dessas *Doenças crônicas* ou se encaixa nesses quesitos? 😐\n" +
+                    "Você possui alguma dessas *Doenças crônicas* ou se encaixa nesses quesitos? 😕\n" +
                     "\n*Diabetes*\n" +
                     "*Hipertensão*\n" +
                     "*Insuficiência Cardíaca*\n" +
@@ -229,7 +256,7 @@ def sintomas_user(msg):
             text="SIM", callback_data="SINTOMAS_SIM pressed"),
          InlineKeyboardButton(text="NÃO", callback_data="SINTOMAS_NAO pressed")]])
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Recentemente você tem apresentado algum desses sintomas? 😐\n" +
+                    "Recentemente você tem apresentado algum desses sintomas? 😯\n" +
                     "\n*Coriza*\n" +
                     "*Dor de garganta*\n" +
                     "*Tosse*\n" +
@@ -264,7 +291,7 @@ def historico02_user(msg):
          InlineKeyboardButton(text="NÃO", callback_data="HISTORICO02_NAO pressed")]])
     bot.sendMessage(
         msg['message']['chat']['id'],
-        "Teve contato próximo com *caso confirmado* de Coronavírus?🤨", parse_mode="Markdown", reply_markup=keyboard
+        "Teve contato próximo com *caso confirmado* de Coronavírus?😯", parse_mode="Markdown", reply_markup=keyboard
     )
 
 
