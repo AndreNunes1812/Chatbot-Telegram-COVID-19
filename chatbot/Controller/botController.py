@@ -65,7 +65,6 @@ def receive_message(msg):
 
             location_user = (msg["location"]["latitude"],
                              msg["location"]["longitude"])
-            print("Localizacao do user: ", location_user)
             result_distances = []
 
             for key in ubs:
@@ -107,7 +106,14 @@ def receive_message(msg):
                     hospitais["Hospital Delphina Rinaldi Abdel Aziz"]["end"]),
                 foursquare_id=None
             )
+            bot.sendMessage(msg['chat']['id'],
+                            "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA por meio do contato telegram abaixo.",
+                            parse_mode="Markdown")
+            bot.sendMessage(msg['chat']['id'],
+                            "https://t.me/medicouea",
+                            parse_mode="Markdown")
             append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
+            gravidade = 0
 
     if((content_type == 'text') and (msg['text'].lower() != "/start")):
         txt = msg["text"]
@@ -197,7 +203,7 @@ def menu_bot_chat(msg):
     # Realiza saudação e envia o menu
     bot.sendMessage(
         get_chat_id(msg),
-        text="Seja Bem-vindo *" + get_user_name(msg) + "*" +
+        text="ATENÇÃO VERSÃO DE TESTES, NÃO OFICIAL!\n\nSeja Bem-vindo *" + get_user_name(msg) + "*" +
         "\nEu sou o *🤖CovidBot da UEA* e vou realizar a sua *Triagem Virtual.*\nPara isso irei fazer uma série de perguntas para você.\n" +
         "\nQuando estiver pronto, aperte em *COMEÇAR* 😁",
         parse_mode="Markdown",
