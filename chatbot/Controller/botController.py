@@ -24,7 +24,7 @@ def append_dict_as_row(file_name, dict_of_elem, field_names):
         dict_writer = DictWriter(write_obj, fieldnames=field_names)
         # Add dictionary as wor in the csv
         dict_writer.writerow(dict_of_elem)
-#{'nome': 'Erik', 'idade': 68, 'genero': 'F', 'sintomas': 'S', 'grau': 'ALTO', 'latitude': -3.041709, 'longitude': -59.99728}
+# {'nome': 'Erik', 'idade': 68, 'genero': 'F', 'sintomas': 'S', 'grau': 'ALTO', 'latitude': -3.041709, 'longitude': -59.99728}
 
 
 def get_chat_id(msg):
@@ -162,6 +162,19 @@ def on_callback_query(msg):
         if((query_data == "HISTORICO02_SIM pressed")or(gravidade >= 5)):
             gravidade += 3
             bot.answerCallbackQuery(query_id, unidade_user(msg))
+        elif(int(user["idade"]) <= 30):
+            bot.editMessageReplyMarkup(telepot.message_identifier(
+                msg["message"]), reply_markup=None)
+            bot.answerCallbackQuery(query_id, bot.sendMessage(msg['message']['chat']['id'],
+                                                              "Obrigado por responder!😁\n" +
+                                                              "Não esqueça de:\n\n" +
+                                                              "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
+                                                              "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
+                                                              "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
+                                                              "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
+                                                              "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
+                                                              "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
+                                                              parse_mode="Markdown"))
         else:
             bot.editMessageReplyMarkup(telepot.message_identifier(
                 msg["message"]), reply_markup=None)
@@ -174,9 +187,7 @@ def on_callback_query(msg):
                                                               "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
                                                               "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
                                                               "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
-                                                              parse_mode="Markdown")
-                                    )
-
+                                                              parse_mode="Markdown"))
     if(query_data == "UNIDADE MAIS PROXIMA pressed"):
         bot.editMessageReplyMarkup(telepot.message_identifier(
             msg["message"]), reply_markup=None)
@@ -271,6 +282,8 @@ def sintomas_user(msg):
                     "*Mal Estar em Geral*\n" +
                     "*Dificuldade para respirar*\n" +
                     "*Diarreia*",
+                    "*Perda de Olfato*",
+                    "*Perda de Paladar*",
                     parse_mode="Markdown", reply_markup=keyboard
                     )
 
