@@ -10,7 +10,7 @@ import csv
 import re
 
 
-bot = telepot.Bot('820651983:AAEjeM1axbVkn2DPu6kFf7WhvoK8fk_d5eE')
+bot = telepot.Bot('820651983:AAFzexJ58VIco5G_zLPB-gtHiz8cBd-1ScI')
 user = {}
 gravidade = 0
 fieldnames = ["nome", "idade", "genero",
@@ -159,7 +159,7 @@ def on_callback_query(msg):
             gravidade += 2
         bot.answerCallbackQuery(query_id, historico02_user(msg))
     if((query_data == "HISTORICO02_SIM pressed")or(query_data == "HISTORICO02_NAO pressed")):
-        if((query_data == "HISTORICO02_SIM pressed")or(gravidade >= 5)):
+        if((query_data == "HISTORICO02_SIM pressed")and(gravidade >= 5)and(int(user["idade"])) > 30):
             gravidade += 3
             bot.answerCallbackQuery(query_id, unidade_user(msg))
         elif(int(user["idade"]) <= 30):
@@ -281,8 +281,8 @@ def sintomas_user(msg):
                     "*Febre*\n" +
                     "*Mal Estar em Geral*\n" +
                     "*Dificuldade para respirar*\n" +
-                    "*Diarreia*",
-                    "*Perda de Olfato*",
+                    "*Diarreia\n" +
+                    "*Perda de Olfato\n" +
                     "*Perda de Paladar*",
                     parse_mode="Markdown", reply_markup=keyboard
                     )
