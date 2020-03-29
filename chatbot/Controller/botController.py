@@ -162,7 +162,7 @@ def on_callback_query(msg):
         if((query_data == "HISTORICO02_SIM pressed")and(gravidade >= 5)and(int(user["idade"])) > 30):
             gravidade += 3
             bot.answerCallbackQuery(query_id, unidade_user(msg))
-        elif(int(user["idade"]) <= 30):
+        elif((int(user["idade"]) <= 30)and(query_data == "HISTORICO02_SIM pressed")):
             bot.editMessageReplyMarkup(telepot.message_identifier(
                 msg["message"]), reply_markup=None)
             bot.answerCallbackQuery(query_id, bot.sendMessage(msg['message']['chat']['id'],
@@ -175,6 +175,9 @@ def on_callback_query(msg):
                                                               "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
                                                               "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
                                                               parse_mode="Markdown"))
+        elif((gravidade >= 5)and(int(user["idade"])) > 30):
+            gravidade += 3
+            bot.answerCallbackQuery(query_id, unidade_user(msg))
         else:
             bot.editMessageReplyMarkup(telepot.message_identifier(
                 msg["message"]), reply_markup=None)
