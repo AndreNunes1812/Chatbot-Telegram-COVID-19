@@ -87,6 +87,14 @@ def receive_message(msg):
                 address=str(ubs[result_distances[0][0]]["end"]),
                 foursquare_id=None
             )
+            bot.sendMessage(msg['chat']['id'],
+                            "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA por meio do contato telegram abaixo.",
+                            parse_mode="Markdown")
+            bot.sendMessage(msg['chat']['id'],
+                            "https://t.me/medicouea",
+                            parse_mode="Markdown")
+            append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
+            gravidade = 0
             append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
         if(gravidade > 5):
             user["grau"] = "ALTO"
