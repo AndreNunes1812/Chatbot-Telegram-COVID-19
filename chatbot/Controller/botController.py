@@ -55,7 +55,7 @@ def receive_message(msg):
     # Imprime a msg em JSON para feedback no terminal
     if((content_type == 'text') and (msg['text'].lower() == "/start")):
         menu_bot_chat(msg)
-    if((content_type == 'location')and(gravidade >= 6)):
+    if((content_type == 'location')and(gravidade != 0)):
         if(gravidade <= 4):
             user["grau"] = "BAIXO"
         if((gravidade > 4) and (gravidade <= 5)):
@@ -176,7 +176,6 @@ def on_callback_query(msg):
                                                               "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
                                                               parse_mode="Markdown"))
         elif((gravidade >= 5)and(int(user["idade"])) > 30):
-            gravidade += 3
             bot.answerCallbackQuery(query_id, unidade_user(msg))
         else:
             bot.editMessageReplyMarkup(telepot.message_identifier(
