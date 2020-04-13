@@ -163,7 +163,7 @@ def on_callback_query(msg):
         gravidade += 2
         bot.answerCallbackQuery(query_id, unidade_user(msg))
         bot.sendMessage(
-            msg['message']['chat']['id'], "Por favor procurar imediatamente a emergência na UBS mais próxima ou chamar *SAMU - 190*", parse_mode="Markdown")
+            msg['message']['chat']['id'], "Por favor procurar imediatamente a emergência na UBS mais próxima ou chamar *SAMU - 192*", parse_mode="Markdown")
     if(query_data == "NÃO SENSAÇÃO CRIANÇA pressed"):
         indicacao_user_crianca(msg)
         send_contato(msg)
