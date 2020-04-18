@@ -1,7 +1,7 @@
 from csv import DictWriter
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 from haversine import haversine, Unit
-from Model.unidades_atendimento import ubs, hospitais
+from Model.base_unidades_atendimento import unidades_atendimento
 from pprint import pprint
 from time import sleep
 import operator
@@ -11,20 +11,26 @@ import re
 
 
 bot = telepot.Bot('820651983:AAGw5xDAWJ1ILN2IgaP-jVaelhgO_jL6juM')
+#bot = telepot.Bot('1208891513:AAFzZIbNLnTng_ZecqAjeuBcwCucLXrsjHw')#teste
 user = {}
 gravidade = 0
-fieldnames = ["nome", "idade", "genero",
-              "sintomas", "grau", "latitude", "longitude"]
-
-
-def append_dict_as_row(file_name, dict_of_elem, field_names):
-    # Open file in append mode
-    with open(file_name, 'a+', newline='') as write_obj:
-        # Create a writer object from csv module
-        dict_writer = DictWriter(write_obj, fieldnames=field_names)
-        # Add dictionary as wor in the csv
-        dict_writer.writerow(dict_of_elem)
-# {'nome': 'Erik', 'idade': 68, 'genero': 'F', 'sintomas': 'S', 'grau': 'ALTO', 'latitude': -3.041709, 'longitude': -59.99728}
+recomendar = False
+fim_questionario = False
+fieldnames = [
+    "nome",
+    "idade",
+    "genero",
+    "febre",
+    "dor_de_cabeca",
+    "coriza",
+    "dor_na_garganta",
+    "tosse_seca",
+    "dificuldade_respiratoria",
+    "dores_no_corpo",
+    "diarreia",
+    "dor_no_peito",
+    "contato_infectado",
+    "grau", "latitude", "longitude"]
 
 
 def get_message_text(msg):
@@ -39,8 +45,18 @@ def get_user_name(msg):
     return msg['from']['first_name']
 
 
+def append_dict_as_row(file_name, dict_of_elem, field_names):
+    # Open file in append mode
+    with open(file_name, 'a+', newline='') as write_obj:
+        # Create a writer object from csv module
+        dict_writer = DictWriter(write_obj, fieldnames=field_names)
+        # Add dictionary as wor in the csv
+        dict_writer.writerow(dict_of_elem)
+
+
 def receive_message(msg):
     global gravidade
+    global recomendar
     global user
     global fieldnames
     """ Recebe e trata a Mensagem """
@@ -48,47 +64,39 @@ def receive_message(msg):
 
     if((content_type == 'text') and (msg['text'].lower() == "/start")):
         menu_bot_chat(msg)
-    if((content_type == 'location')and(gravidade != 0)):
-        if(gravidade <= 4):
-            user["grau"] = "BAIXO"
-        if((gravidade > 4) and (gravidade <= 5)):
-            user["grau"] = "MEDIO"
+    if((content_type == 'location')and(recomendar == True)):
+        if(user["grau"] == "BAIXO"):
+            pass
+        if(user["grau"] == "MEDIO"):
             user["latitude"] = msg["location"]["latitude"]
             user["longitude"] = msg["location"]["longitude"]
-
             location_user = (msg["location"]["latitude"],
                              msg["location"]["longitude"])
             result_distances = []
 
-            for key in ubs:
+            # CALCULA E ENCONTRA UBS MAIS PROXIMA
+            for key in unidades_atendimento:
                 result_distances = {}
-                for key in ubs:
-                    result_distances[key] = haversine((ubs[key]["latitude"], ubs[key]
+                for key in unidades_atendimento:
+                    result_distances[key] = haversine((unidades_atendimento[key]["latitude"], unidades_atendimento[key]
                                                        ["longitude"]), location_user)
-
             result_distances = sorted(
                 result_distances.items(), key=operator.itemgetter(1))
+
             bot.sendMessage(msg['chat']['id'],
                             "*Unidade de atendimento* mais perto de você:",
                             parse_mode="Markdown")
-
             bot.sendVenue(
                 chat_id=msg['chat']['id'],
-                latitude=ubs[result_distances[0][0]]["latitude"],
-                longitude=ubs[result_distances[0][0]]['longitude'],
+                latitude=unidades_atendimento[result_distances[0][0]]["latitude"],
+                longitude=unidades_atendimento[result_distances[0][0]]['longitude'],
                 title=str(result_distances[0][0]).upper(),
-                address=str(ubs[result_distances[0][0]]["end"]),
+                address=str(unidades_atendimento[result_distances[0][0]]["end"]),
                 foursquare_id=None
             )
-            bot.sendMessage(msg['chat']['id'],
-                            "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA por meio do contato telegram abaixo.",
-                            parse_mode="Markdown")
-            bot.sendMessage(msg['chat']['id'],
-                            "https://t.me/medicouea",
-                            parse_mode="Markdown")
+            send_contato(msg['chat']['id'])
             append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
-            gravidade = 0
-        if(gravidade > 5):
+        if(user["grau"] == "ALTO"):
             user["grau"] = "ALTO"
             user["latitude"] = msg["location"]["latitude"]
             user["longitude"] = msg["location"]["longitude"]
@@ -97,10 +105,10 @@ def receive_message(msg):
                              msg["location"]["longitude"])
             result_distances = []
 
-            for key in ubs:
+            for key in unidades_atendimento:
                 result_distances = {}
-                for key in ubs:
-                    result_distances[key] = haversine((ubs[key]["latitude"], ubs[key]
+                for key in unidades_atendimento:
+                    result_distances[key] = haversine((unidades_atendimento[key]["latitude"], unidades_atendimento[key]
                                                        ["longitude"]), location_user)
 
             result_distances = sorted(
@@ -111,27 +119,24 @@ def receive_message(msg):
 
             bot.sendVenue(
                 chat_id=msg['chat']['id'],
-                latitude=ubs[result_distances[0][0]]["latitude"],
-                longitude=ubs[result_distances[0][0]]['longitude'],
+                latitude=unidades_atendimento[result_distances[0][0]]["latitude"],
+                longitude=unidades_atendimento[result_distances[0][0]]['longitude'],
                 title=str(result_distances[0][0]).upper(),
-                address=str(ubs[result_distances[0][0]]["end"]),
+                address=str(unidades_atendimento[result_distances[0][0]]["end"]),
                 foursquare_id=None
             )
-            bot.sendMessage(msg['chat']['id'],
-                            "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA por meio do contato telegram abaixo.",
-                            parse_mode="Markdown")
-            bot.sendMessage(msg['chat']['id'],
-                            "https://t.me/medicouea",
-                            parse_mode="Markdown")
+            send_contato(msg['chat']['id'])
             append_dict_as_row('chatbotRelatorio.csv', user, fieldnames)
-            gravidade = 0
-
     else:
         pass
 
 
 def on_callback_query(msg):
     global gravidade
+    global recomendar
+    global fim_questionario
+    global fieldnames
+    global user
 
     query_id, from_id, query_data = telepot.glance(
         msg, flavor='callback_query')
@@ -145,128 +150,196 @@ def on_callback_query(msg):
                                                   callback_data="CRIANÇA pressed")],
                             [InlineKeyboardButton(text="ADULTO",
                                                   callback_data="ADULTO pressed")]]))
+
+# TRIAGEM PEDIATRIA
     if(query_data == "CRIANÇA pressed"):
         bot.answerCallbackQuery(query_id, idade_user_crianca(msg))
     if(query_data == "SIM IDADE 5 pressed"):
         gravidade += 2
         bot.answerCallbackQuery(query_id, sintomas_user_crianca(msg))
     if(query_data == "NÃO IDADE 5 pressed"):
+        remove_buttons(msg)
         indicacao_user_crianca(msg)
         send_contato(msg)
     if(query_data == "SIM SINTOMAS CRIANÇA pressed"):
         gravidade += 2
         bot.answerCallbackQuery(query_id, sensacao_user_crianca(msg))
     if(query_data == "NÃO SINTOMAS CRIANÇA pressed"):
+        remove_buttons(msg)
         indicacao_user_crianca(msg)
         send_contato(msg)
-    if(query_data == "SIM SENSAÇÃO CRIANÇA pressed"):
-        gravidade += 2
-        bot.answerCallbackQuery(query_id, unidade_user(msg))
-        bot.sendMessage(
-            msg['message']['chat']['id'], "Por favor procurar imediatamente a emergência na UBS mais próxima ou chamar *SAMU - 192*", parse_mode="Markdown")
-    if(query_data == "NÃO SENSAÇÃO CRIANÇA pressed"):
-        indicacao_user_crianca(msg)
-        send_contato(msg)
+    if((query_data == "SIM SENSAÇÃO CRIANÇA pressed")or(query_data == "NÃO SENSAÇÃO CRIANÇA pressed")):
+        if(query_data == "SIM SENSAÇÃO CRIANÇA pressed"):
+            gravidade += 2
+        if(gravidade == 4):
+            user["grau"] = "MEDIO"
+            recomendar = True
+
+            bot.sendMessage(msg['message']['chat']['id'],
+                            "Por favor *procurar imediatamente* a emergência em unidade de atendimento mais próxima ou chamar *SAMU - 192*",
+                            parse_mode="Markdown")
+            bot.answerCallbackQuery(query_id, unidade_user(msg))
+        if(gravidade == 6):
+
+            user["grau"] = "ALTO"
+            recomendar = True
+
+            bot.sendMessage(msg['message']['chat']['id'],
+                            "Por favor *procurar imediatamente* a emergência em unidade de atendimento mais próxima ou chamar *SAMU - 192*",
+                            parse_mode="Markdown")
+            bot.answerCallbackQuery(query_id, unidade_user(msg))
+        else:
+            remove_buttons(msg)
+            user["grau"] = "BAIXO"
+            indicacao_user_crianca(msg)
+            send_contato(msg)
+
+# TRIAGEM CLINICA GERAL
     if(query_data == "ADULTO pressed"):
         bot.answerCallbackQuery(query_id, idade_user(msg))
     if((query_data == "IDADE ADULTO pressed")or(query_data == "MEIA IDADE pressed")or(query_data == "IDADE IDOSO pressed")):
         if(query_data == "IDADE ADULTO pressed"):
             user["idade"] = "adulto"
-            gravidade += 1
         elif(query_data == "MEIA IDADE pressed"):
             user["idade"] = "meia-idade"
-            gravidade += 1
         elif(query_data == "IDADE IDOSO pressed"):
             user["idade"] = "idoso"
-            gravidade += 2
         bot.answerCallbackQuery(query_id, sexo_user(msg))
-
     if((query_data == "SEXO_MASCULINO pressed")or(query_data == "SEXO_FEMININO pressed")):
         if(query_data == "SEXO_MASCULINO pressed"):
             user["genero"] = "M"
         if(query_data == "SEXO_MASCULINO pressed"):
             user["genero"] = "F"
-        bot.answerCallbackQuery(query_id, doencas_user(msg))
-    if((query_data == "DOENCAS_SIM pressed")or(query_data == "DOENCAS_NÃO pressed")):
-        if(query_data == "DOENCAS_SIM pressed"):
+        bot.answerCallbackQuery(query_id, febre_user(msg))
+    if((query_data == "SIM FEBRE pressed")or(query_data == "NÃO FEBRE pressed")):
+        if(query_data == "SIM FEBRE pressed"):
+            gravidade += 5
+            user["febre"] = "sim"
+        else:
+            user["febre"] = "nao"
+        bot.answerCallbackQuery(query_id, dor_cabeca_user(msg))
+    if((query_data == "SIM DOR CABEÇA pressed")or(query_data == "NÃO DOR CABEÇA pressed")):
+        if(query_data == "SIM DOR CABEÇA pressed"):
             gravidade += 1
-        bot.answerCallbackQuery(query_id, sintomas_user(msg))
-    if((query_data == "SINTOMAS_SIM pressed")or(query_data == "SINTOMAS_NÃO pressed")):
-        if(query_data == "SINTOMAS_SIM pressed"):
-            user["sintomas"] = "S"
-            gravidade += 3
+            user["dor_de_cabeca"] = "sim"
         else:
-            user["sintomas"] = "N"
-        bot.answerCallbackQuery(query_id, historico01_user(msg))
-    if((query_data == "HISTORICO01_SIM pressed")or(query_data == "HISTORICO01_NÃO pressed")):
-        if(query_data == "HISTORICO01_SIM pressed"):
-            gravidade += 2
-        bot.answerCallbackQuery(query_id, historico02_user(msg))
-    if((query_data == "HISTORICO02_SIM pressed")or(query_data == "HISTORICO02_NÃO pressed")):
-        if((query_data == "HISTORICO02_SIM pressed")and(gravidade >= 5)and((user["idade"] == "meia-idade")or(user["idade"] == "idoso"))):
-            gravidade += 3
-            bot.answerCallbackQuery(query_id, unidade_user(msg))
-        elif(((user["idade"] == "meia-idade")or(user["idade"] == "idoso"))and(query_data == "HISTORICO02_SIM pressed")):
-            remove_buttons(msg)
-            bot.answerCallbackQuery(query_id, bot.sendMessage(msg['message']['chat']['id'],
-                                                              "Obrigado por responder!😁\n" +
-                                                              "Não esqueça de:\n\n" +
-                                                              "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
-                                                              "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
-                                                              "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
-                                                              "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
-                                                              "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
-                                                              "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
-                                                              parse_mode="Markdown"))
-
-        elif((gravidade >= 5)and((user["idade"] == "meia-idade")or(user["idade"] == "idoso"))):
-            bot.answerCallbackQuery(query_id, unidade_user(msg))
+            user["dor_de_cabeca"] = "nao"
+        bot.answerCallbackQuery(query_id, coriza_user(msg))
+    if((query_data == "SIM CORIZA pressed")or(query_data == "NÃO CORIZA pressed")):
+        if(query_data == "SIM CORIZA pressed"):
+            gravidade += 1
+            user["coriza"] = "sim"
         else:
-            remove_buttons(msg)
-            bot.answerCallbackQuery(query_id, bot.sendMessage(msg['message']['chat']['id'],
-                                                              "Obrigado por responder!😁\n" +
-                                                              "Não esqueça de:\n\n" +
-                                                              "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
-                                                              "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
-                                                              "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
-                                                              "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
-                                                              "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
-                                                              "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
-                                                              parse_mode="Markdown"))
+            user["coriza"] = "nao"
+        bot.answerCallbackQuery(query_id, dor_garganta_user(msg))
+    if((query_data == "SIM DOR NA GARGANTA pressed")or(query_data == "NÃO DOR NA GARGANTA pressed")):
+        if(query_data == "SIM DOR NA GARGANTA pressed"):
+            gravidade += 1
+            user["dor_na_garganta"] = "sim"
+        else:
+            user["dor_na_garganta"] = "nao"
+        bot.answerCallbackQuery(query_id, tosse_user(msg))
+    if((query_data == "SIM TOSSE pressed")or(query_data == "NÃO TOSSE pressed")):
+        if(query_data == "SIM TOSSE pressed"):
+            gravidade += 3
+            user["tosse_seca"] = "sim"
+        else:
+            user["tosse_seca"] = "nao"
+        bot.answerCallbackQuery(query_id, dificuldade_respiratoria_user(msg))
+    if((query_data == "SIM DIFICULDADE RESPIRATORIA pressed")or(query_data == "NÃO DIFICULDADE RESPIRATORIA pressed")):
+        if(query_data == "SIM DIFICULDADE RESPIRATORIA pressed"):
+            gravidade += 10
+            user["dificuldade_respiratoria"] = "sim"
+        else:
+            user["dificuldade_respiratoria"] = "nao"
+        bot.answerCallbackQuery(query_id, dor_no_corpo_user(msg))
+    if((query_data == "SIM DOR NO CORPO pressed")or(query_data == "NÃO DOR NO CORPO pressed")):
+        if(query_data == "SIM DOR NO CORPO pressed"):
+            gravidade += 1
+            user["dores_no_corpo"] = "sim"
+        else:
+            user["dores_no_corpo"] = "nao"
+        bot.answerCallbackQuery(query_id, diarreia_user(msg))
+    if((query_data == "SIM DIARREIA pressed")or(query_data == "NÃO DIARREIA pressed")):
+        if(query_data == "SIM DIARREIA pressed"):
+            gravidade += 1
+            user["diarreia"] = "sim"
+        else:
+            user["diarreia"] = "nao"
+        bot.answerCallbackQuery(query_id, peito_user(msg))
+    if((query_data == "SIM DOR NO PEITO pressed")or(query_data == "NÃO DOR NO PEITO pressed")):
+        if(query_data == "SIM DOR NO PEITO pressed"):
+            gravidade += 3
+            user["dor_no_peito"] = "sim"
+        else:
+            user["dor_no_peito"] = "nao"
+        bot.answerCallbackQuery(query_id, historico_user(msg))
+    if((query_data == "SIM HISTORICO pressed")or(query_data == "NÃO HISTORICO pressed")):
+        if(query_data == "SIM HISTORICO pressed"):
+            gravidade += 10
+            user["contato_infectado"] = "sim"
+        else:
+            user["contato_infectado"] = "nao"
+        fim_questionario = True
     if(query_data == "UNIDADE MAIS PROXIMA pressed"):
         remove_buttons(msg)
-        bot.answerCallbackQuery(query_id,
-                                bot.sendMessage(msg['message']['chat']['id'],
-                                                "Vá em *Anexo > Localização*, e envie-me sua *Localização Atual*. 😁",
-                                                parse_mode="Markdown")
-                                )
-
+        bot.sendMessage(msg['message']['chat']['id'],
+                        "Vá em *Anexo > Localização*, e envie-me sua *Localização Atual*. 😁",
+                        parse_mode="Markdown")
+    elif(fim_questionario == True):
+        if(gravidade <= 9):
+            user["grau"] = "BAIXO"
+            remove_buttons(msg)
+            bot.sendMessage(msg['message']['chat']['id'],
+                            "Obrigado por responder!😁\n" +
+                            "Não esqueça de:\n\n" +
+                            "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
+                            "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
+                            "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
+                            "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
+                            "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
+                            "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
+                            parse_mode="Markdown")
+            send_contato(msg['message']['chat']['id'])
+        if((gravidade >= 10) and (gravidade <= 19)):
+            user["grau"] = "MEDIO"
+            recomendar = True
+            bot.answerCallbackQuery(query_id, unidade_user(msg))
+        if((gravidade >= 20) and (gravidade <= 36)):
+            user["grau"] = "ALTO"
+            recomendar = True
+            bot.answerCallbackQuery(query_id, unidade_user(msg))
     else:
         pass
 
 
+# FUNÇÕES
 def remove_buttons(msg):
+    """ Remove os inline buttons das mensagens do bot """
+
     bot.editMessageReplyMarkup(telepot.message_identifier(
         msg["message"]), reply_markup=None)
 
 
-def send_contato(msg):
-    bot.sendMessage(msg['message']['chat']['id'],
-                    "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA por meio do contato telegram abaixo.",
-                    parse_mode="Markdown")
-    bot.sendMessage(msg['message']['chat']['id'],
-                    "https://t.me/medicouea",
+def send_contato(msg_id):
+    """ Envia o contato do médico para tirar dúvidas"""
+
+    bot.sendMessage(msg_id,
+                    "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA\npor meio do contato telegram abaixo.\n\nhttps://t.me/medicouea",
                     parse_mode="Markdown")
 
 
 def menu_bot_chat(msg):
     global user
+    global gravidade
+    global recomendar
+    global fim_questionario
     """ Função de Menu do Bot """
 
     bot.sendMessage(
         msg['chat']['id'],
-        text="ATENÇÃO VERSÃO DE TESTES, NÃO OFICIAL!\n\nSeja Bem-vindo *" + get_user_name(msg) + "*" +
-        "\nEu sou o *🤖CovidBot da UEA* e vou realizar a sua *Triagem Virtual.*\nPara isso irei fazer uma série de perguntas para você.\n" +
+        text="ATENÇÃO VERSÃO DE TESTES, NÃO OFICIAL!\n\nSeja Bem-vindo *" + get_user_name(msg) + "*\n" +
+        "\nEu sou o *🤖CovidBot da UEA* e vou realizar a sua *Triagem Virtual.* Para isso irei fazer uma série de perguntas direcionadas.\n" +
         "\nQuando estiver pronto, aperte em *COMEÇAR* 😁",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
@@ -276,12 +349,15 @@ def menu_bot_chat(msg):
 
     user["nome"] = get_user_name(msg)
     gravidade = 0
+    recomendar = False
+    fim_questionario = False
 
 
+# FORMATAÇÃO DAS PERGUNTAS E MENSAGENS
 def idade_user_crianca(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
-                    "A criança tem mais de *5 anos* de idade? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    "*Pergunta 1/3*\n\nA criança tem *menos de 5 anos* de idade? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
                             text="SIM", callback_data="SIM IDADE 5 pressed"),
                          InlineKeyboardButton(text="NÃO", callback_data="NÃO IDADE 5 pressed")]]))
@@ -290,7 +366,7 @@ def idade_user_crianca(msg):
 def sintomas_user_crianca(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
-                    "A criança tem algum desses sintomas? 🤔" +
+                    "*Pergunta 2/3*\n\nA criança tem algum desses sintomas? 🤔" +
                     "\n\n*Febre*\n*Tosse*\n*Dor de garganta*\n*Dificuldade respiratória*\n", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
                             text="SIM", callback_data="SIM SINTOMAS CRIANÇA pressed"),
@@ -299,10 +375,11 @@ def sintomas_user_crianca(msg):
 
 def sensacao_user_crianca(msg):
     remove_buttons(msg)
-    bot.sendMessage(msg['message']['chat']['id'], "A criança apresenta falta de ar, sensação de desmaio?", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="SIM", callback_data="SIM SENSAÇÃO CRIANÇA pressed"),
-         InlineKeyboardButton(text="NÃO", callback_data="NÃO SENSAÇÃO CRIANÇA pressed")]]))
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "*Pergunta 3/3*\n\nA criança apresenta falta de ar, sensação de desmaio?", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM SENSAÇÃO CRIANÇA pressed"),
+                            InlineKeyboardButton(text="NÃO", callback_data="NÃO SENSAÇÃO CRIANÇA pressed")]]))
 
 
 def indicacao_user_crianca(msg):
@@ -318,12 +395,12 @@ def indicacao_user_crianca(msg):
 def idade_user(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Qual seria sua faixa de idade em anos? 🤔", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                        [InlineKeyboardButton(text="Entre 20 a 39 anos",
+                    "*Pergunta 1/12*\n\nQual seria sua faixa de idade em anos? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text="Entre 18 a 39 anos 👨🏻",
                                               callback_data="IDADE ADULTO pressed")],
-                        [InlineKeyboardButton(text="Entre 40 a 59 anos",
+                        [InlineKeyboardButton(text="Entre 40 a 59 anos 👨🏻‍🦳",
                                               callback_data="MEIA IDADE pressed")],
-                        [InlineKeyboardButton(text="Mais de 60 anos",
+                        [InlineKeyboardButton(text="Mais de 60 anos 👴🏻",
                                               callback_data="IDADE IDOSO pressed")]
                     ]))
 
@@ -331,72 +408,99 @@ def idade_user(msg):
 def sexo_user(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Qual é o seu gênero? 🤔", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+                    "*Pergunta 2/12*\n\nQual é o seu gênero? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
                         text="♂️ Masculino", callback_data="SEXO_MASCULINO pressed"),
                         InlineKeyboardButton(text="♀️ Feminino", callback_data="SEXO_FEMININO pressed")]]))
 
 
-def doencas_user(msg):
+def febre_user(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Você possui alguma dessas *Doenças crônicas* ou se encaixa nesses quesitos? 😕\n" +
-                    "\n*Diabetes*\n" +
-                    "*Hipertensão*\n" +
-                    "*Insuficiência Cardíaca*\n" +
-                    "*Doença Pulmonar Obstrutiva*\n" +
-                    "*Asma Grave*\n" +
-                    "*HIV*\n" +
-                    "*Câncer*\n" +
-                    "*Possui transplantados de qualquer orgão*\n" +
-                    "*Usuário de medicação imunosupressora*",
-                    parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    "*Pergunta 3/12*\n\nVocê está com *Febre*? 🤒", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="DOENCAS_SIM pressed"),
-                            InlineKeyboardButton(text="NÃO", callback_data="DOENCAS_NÃO pressed")]])
-                    )
+                            text="SIM", callback_data="SIM FEBRE pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO FEBRE pressed")]]))
 
 
-def sintomas_user(msg):
+def dor_cabeca_user(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Recentemente você tem apresentado algum desses sintomas? 😯\n" +
-                    "\n*Coriza*\n" +
-                    "*Dor de garganta*\n" +
-                    "*Tosse*\n" +
-                    "*Dor de cabeça*\n" +
-                    "*Febre*\n" +
-                    "*Mal Estar em Geral*\n" +
-                    "*Dificuldade para respirar*\n" +
-                    "*Diarreia\n" +
-                    "*Perda de Olfato\n" +
-                    "*Perda de Paladar*",
-                    parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    "*Pergunta 4/12*\n\nVocê está sentindo *Dor de Cabeça*? 😣", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SINTOMAS_SIM pressed"),
-                            InlineKeyboardButton(text="NÃO", callback_data="SINTOMAS_NÃO pressed")]])
-                    )
+                            text="SIM", callback_data="SIM DOR CABEÇA pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR CABEÇA pressed")]]))
 
 
-def historico01_user(msg):
+def coriza_user(msg):
     remove_buttons(msg)
-    bot.sendMessage(
-        msg['message']['chat']['id'],
-        "Teve contato próximo com *caso suspeito* de Coronavírus?🤨", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text="SIM", callback_data="HISTORICO01_SIM pressed"),
-                InlineKeyboardButton(text="NÃO", callback_data="HISTORICO01_NÃO pressed")]])
-    )
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "*Pergunta 5/12*\n\nVocê está com algum desses sintomas? 🤔\n\n*Secreção Nasal*\n*Espirros*\n*Perda de Olfato e Paladar*", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM CORIZA pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO CORIZA pressed")]]))
 
 
-def historico02_user(msg):
+def dor_garganta_user(msg):
     remove_buttons(msg)
-    bot.sendMessage(
-        msg['message']['chat']['id'],
-        "Teve contato próximo com *caso confirmado* de Coronavírus?😯", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text="SIM", callback_data="HISTORICO02_SIM pressed"),
-                InlineKeyboardButton(text="NÃO", callback_data="HISTORICO02_NÃO pressed")]])
-    )
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "*Pergunta 6/12*\n\nEstá sentindo *Dor ou Irritação na Garganta*? 🤨", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM DOR NA GARGANTA pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR NA GARGANTA pressed")]]))
+
+
+def tosse_user(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "*Pergunta 7/12*\n\nVocê está com *Tosse Seca*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM TOSSE pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO TOSSE pressed")]]))
+
+
+def dificuldade_respiratoria_user(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "*Pergunta 8/12*\n\nApresenta *Dificuldade Respiratória*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM DIFICULDADE RESPIRATORIA pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DIFICULDADE RESPIRATORIA pressed")]]))
+
+
+def dor_no_corpo_user(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "*Pergunta 9/12*\n\nVocê está sentindo *Dores no corpo*? 😖", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM DOR NO CORPO pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR NO CORPO pressed")]]))
+
+
+def diarreia_user(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "*Pergunta 10/12*\n\nVocê está sentindo *Diarreia*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM DIARREIA pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DIARREIA pressed")]]))
+
+
+def peito_user(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "Está se sentindo *Dor no peito*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM DOR NO PEITO pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR NO PEITO pressed")]]))
+
+
+def historico_user(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "Esteve em contato, nos últimos 14 dias com um caso diagnosticado com COVID-19? 🙁", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="SIM", callback_data="SIM HISTORICO pressed"),
+                         InlineKeyboardButton(text="NÃO", callback_data="NÃO HISTORICO pressed")]]))
 
 
 def unidade_user(msg):
