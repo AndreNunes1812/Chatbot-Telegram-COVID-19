@@ -1,7 +1,22 @@
+#   UNIVERSIDADE DO ESTADO AMAZONAS
+#          Chatbot Saúde UEA
+#
+# Membros deste projeto:
+#
+#   Prof. Dr. Fábio Santos da Silva 
+#   Erik Atílio Silva Reys
+#   Oscar de Menezes Neto
+#   Ramayna Menezes
+#   Jorge Procópio 
+#   Profa. Mariana Broker
+#   Profa. Waldeyde Magalhães
+#   Profa. Dra Elielza Guerreira
+#   Prof. Dr. Darlisom Souza
+
 from csv import DictWriter
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 from haversine import haversine, Unit
-from Model.base_unidades_atendimento import unidades_atendimento
+from Model.base_unidades_atendimento import ubs, hospitais
 from pprint import pprint
 from time import sleep
 import operator
@@ -11,7 +26,7 @@ import re
 
 
 bot = telepot.Bot('820651983:AAGw5xDAWJ1ILN2IgaP-jVaelhgO_jL6juM')
-#bot = telepot.Bot('1208891513:AAFzZIbNLnTng_ZecqAjeuBcwCucLXrsjHw')#teste
+# bot = telepot.Bot('1208891513:AAFzZIbNLnTng_ZecqAjeuBcwCucLXrsjHw')#teste
 user = {}
 gravidade = 0
 recomendar = False
@@ -75,11 +90,18 @@ def receive_message(msg):
             result_distances = []
 
             # CALCULA E ENCONTRA UBS MAIS PROXIMA
-            for key in unidades_atendimento:
-                result_distances = {}
-                for key in unidades_atendimento:
-                    result_distances[key] = haversine((unidades_atendimento[key]["latitude"], unidades_atendimento[key]
-                                                       ["longitude"]), location_user)
+            if(user["idade"] == "idoso"):
+                for key in hospitais:
+                    result_distances = {}
+                    for key in hospitais:
+                        result_distances[key] = haversine((hospitais[key]["latitude"], hospitais[key]
+                                                           ["longitude"]), location_user)
+            else:
+                for key in ubs:
+                    result_distances = {}
+                    for key in ubs:
+                        result_distances[key] = haversine((ubs[key]["latitude"], ubs[key]
+                                                           ["longitude"]), location_user)
             result_distances = sorted(
                 result_distances.items(), key=operator.itemgetter(1))
 
@@ -88,10 +110,13 @@ def receive_message(msg):
                             parse_mode="Markdown")
             bot.sendVenue(
                 chat_id=msg['chat']['id'],
-                latitude=unidades_atendimento[result_distances[0][0]]["latitude"],
-                longitude=unidades_atendimento[result_distances[0][0]]['longitude'],
+                latitude=ubs[result_distances[0]
+                             [0]]["latitude"],
+                longitude=ubs[result_distances[0]
+                              [0]]['longitude'],
                 title=str(result_distances[0][0]).upper(),
-                address=str(unidades_atendimento[result_distances[0][0]]["end"]),
+                address=str(
+                    ubs[result_distances[0][0]]["end"]),
                 foursquare_id=None
             )
             send_contato(msg['chat']['id'])
@@ -105,11 +130,18 @@ def receive_message(msg):
                              msg["location"]["longitude"])
             result_distances = []
 
-            for key in unidades_atendimento:
-                result_distances = {}
-                for key in unidades_atendimento:
-                    result_distances[key] = haversine((unidades_atendimento[key]["latitude"], unidades_atendimento[key]
-                                                       ["longitude"]), location_user)
+            if(user["idade"] == "idoso"):
+                for key in hospitais:
+                    result_distances = {}
+                    for key in hospitais:
+                        result_distances[key] = haversine((hospitais[key]["latitude"], hospitais[key]
+                                                           ["longitude"]), location_user)
+            else:
+                for key in ubs:
+                    result_distances = {}
+                    for key in ubs:
+                        result_distances[key] = haversine((ubs[key]["latitude"], ubs[key]
+                                                           ["longitude"]), location_user)
 
             result_distances = sorted(
                 result_distances.items(), key=operator.itemgetter(1))
@@ -119,10 +151,13 @@ def receive_message(msg):
 
             bot.sendVenue(
                 chat_id=msg['chat']['id'],
-                latitude=unidades_atendimento[result_distances[0][0]]["latitude"],
-                longitude=unidades_atendimento[result_distances[0][0]]['longitude'],
+                latitude=ubs[result_distances[0]
+                             [0]]["latitude"],
+                longitude=ubs[result_distances[0]
+                              [0]]['longitude'],
                 title=str(result_distances[0][0]).upper(),
-                address=str(unidades_atendimento[result_distances[0][0]]["end"]),
+                address=str(
+                    ubs[result_distances[0][0]]["end"]),
                 foursquare_id=None
             )
             send_contato(msg['chat']['id'])
@@ -143,15 +178,14 @@ def on_callback_query(msg):
 
     print("Callback Query: ", query_data)
     if(query_data == "COMEÇAR pressed"):
+        bot.answerCallbackQuery(query_id, sub_menu(msg))
+    if(query_data == "CRÉDITOS pressed"):
+        bot.answerCallbackQuery(query_id, creditos(msg))
+    if(query_data == "VOLTAR pressed"):
         remove_buttons(msg)
-        bot.sendMessage(msg['message']['chat']['id'], text="Qual seu tipo de triagem?",
-                        parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                            [InlineKeyboardButton(text="CRIANÇA",
-                                                  callback_data="CRIANÇA pressed")],
-                            [InlineKeyboardButton(text="ADULTO",
-                                                  callback_data="ADULTO pressed")]]))
-
-# TRIAGEM PEDIATRIA
+        bot.answerCallbackQuery(query_id, menu_bot_chat(msg))
+    if(query_data == "PSICOLOGIA pressed"):
+        bot.answerCallbackQuery(query_id, psicologia(msg))
     if(query_data == "CRIANÇA pressed"):
         bot.answerCallbackQuery(query_id, idade_user_crianca(msg))
     if(query_data == "SIM IDADE 5 pressed"):
@@ -290,16 +324,7 @@ def on_callback_query(msg):
         if(gravidade <= 9):
             user["grau"] = "BAIXO"
             remove_buttons(msg)
-            bot.sendMessage(msg['message']['chat']['id'],
-                            "Obrigado por responder!😁\n" +
-                            "Não esqueça de:\n\n" +
-                            "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
-                            "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
-                            "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
-                            "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
-                            "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
-                            "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
-                            parse_mode="Markdown")
+            send_medidas(msg['message']['chat']['id'])
             send_contato(msg['message']['chat']['id'])
         if((gravidade >= 10) and (gravidade <= 19)):
             user["grau"] = "MEDIO"
@@ -313,7 +338,7 @@ def on_callback_query(msg):
         pass
 
 
-# FUNÇÕES
+# FUNÇÕES DE CONTROLE
 def remove_buttons(msg):
     """ Remove os inline buttons das mensagens do bot """
 
@@ -325,7 +350,25 @@ def send_contato(msg_id):
     """ Envia o contato do médico para tirar dúvidas"""
 
     bot.sendMessage(msg_id,
-                    "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA\npor meio do contato telegram abaixo.\n\nhttps://t.me/medicouea",
+                    "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA\npor meio dos contatos telegram abaixo.",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="MÉDICOS E ENFERMEIRO", callback_data="MÉDICOS E ENFERMEIRO pressed"),
+                         InlineKeyboardButton(text="ALUNOS E TUTORES", callback_data="ALUNOS E TUTORES pressed")]]))
+
+
+def send_medidas(msg_id):
+    remove_buttons(msg_id)
+    bot.sendMessage(msg_id,
+                    "Obrigado por responder!😁\n" +
+                    "Não esqueça de:\n\n" +
+                    "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
+                    "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
+                    "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
+                    "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
+                    "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
+                    "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
                     parse_mode="Markdown")
 
 
@@ -344,7 +387,9 @@ def menu_bot_chat(msg):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="COMEÇAR",
-                                  callback_data="COMEÇAR pressed")]
+                                  callback_data="COMEÇAR pressed")],
+            [InlineKeyboardButton(text="CRÉDITOS",
+                                  callback_data="CRÉDITOS pressed")]
         ]))
 
     user["nome"] = get_user_name(msg)
@@ -353,7 +398,37 @@ def menu_bot_chat(msg):
     fim_questionario = False
 
 
+def sub_menu(msg):
+    remove_buttons(msg)
+    bot.sendMessage(
+        msg['message']['chat']['id'], text="Qual tipo de triagem você deseja?",
+        parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="PEDIATRIA",
+                                  callback_data="CRIANÇA pressed")],
+            [InlineKeyboardButton(text="CLÍNICO GERAL",
+                                  callback_data="ADULTO pressed")],
+            [InlineKeyboardButton(text="PSICOLOGIA",
+                                  callback_data="PSICOLOGIA pressed")]]))
+
+
 # FORMATAÇÃO DAS PERGUNTAS E MENSAGENS
+def psicologia(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "A *UEA* oferece um *serviço de apoio emocional* por meio de uma equipe de psicólogos." +
+                    "\nPara atendimento acesso *click no link abaixo* que você será redirecionado para o *serviço de atendimento via Whatsapp*.",
+                    parse_mode="Markdown")
+
+
+def creditos(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "Segue abaixo o nome das pessoas que participaram no meu desenvolvimento 😊\n\n" +
+                    "Prof. Dr. Fábio Santos da Silva\nErik Atilio Silva Rey\nOscar de Menezes Neto\nRamayna Menezes\nJorge Procópio\nProfa. Mariana Broker\nProfa. Waldeyde Magalhães\nProfa. Dra Elielza Guerreira\nProf. Dr. Darlisom Souza",
+                    parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text="<<< VOLTAR", callback_data="VOLTAR pressed")]]))
+
+
 def idade_user_crianca(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],

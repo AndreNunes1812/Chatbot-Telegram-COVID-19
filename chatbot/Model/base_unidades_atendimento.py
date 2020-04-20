@@ -1,4 +1,4 @@
-unidades_atendimento = {
+ubs = {
     "Ubs José Rayol dos Santos": {"latitude": -3.087224, "longitude": -60.026544, "end": "Av. Constantino Nery, s/n - Flores, Manaus - AM, 69050-001"},
     "Ubs Morro da Liberdade": {"latitude": -3.135130, "longitude": -60.000128, "end": "R. Dona Mimi, s/n - Morro da Liberdade, Manaus - AM, 69074-720"},
     "Ubs Deodato de Miranda Leão": {"latitude": -3.119730, "longitude": -60.036589, "end": "Av. Pres. Dutra, S/N - Glória, Manaus - AM, 69027-110"},
@@ -14,5 +14,12 @@ unidades_atendimento = {
     "Ubs Ivone Lima": {"latitude": -3.082057, "longitude": -59.973388, "end": "R. Luis Corrente, 449-631 - Coroado, Manaus - AM, 69082-471"},
     "Ubs Nilton Lins": {"latitude": -3.054154, "longitude": -60.00592, "end": "Av. Prof. Nilton Lins, 2344 - Flores, Manaus - AM, 69058-580"},
     "Hospital Delphina Rinaldi Abdel Aziz": {"latitude": -2.997812, "longitude": -60.029884, "end": "Av. Torquato Tapajós, 9250 - Colônia Terra Nova, Manaus - AM, 69093-415"},
-    "Hospital de Retaguarda da Nilton Lins": {"latitude": -3.055263, "longitude": -60.006072, "end": "Flores, Manaus - AM"}
+    "Hospital Nilton Lins": {"latitude": -3.055263, "longitude": -60.006072, "end": "Flores, Manaus - AM"},
+    "Hospital e Pronto Socorro Dr. João Lúcio Pereira Machado": {"latitude": -3.073678, "longitude": -59.962384, "end": "Av. Cosme Ferreira, 3937 - Coroado, Manaus - AM"}
+}
+
+hospitais = {
+    "Hospital Delphina Rinaldi Abdel Aziz": {"latitude": -2.997812, "longitude": -60.029884, "end": "Av. Torquato Tapajós, 9250 - Colônia Terra Nova, Manaus - AM, 69093-415"},
+    "Hospital Nilton Lins": {"latitude": -3.055263, "longitude": -60.006072, "end": "Flores, Manaus - AM"},
+    "Hospital e Pronto Socorro Dr. João Lúcio Pereira Machado": {"latitude": -3.073678, "longitude": -59.962384, "end": "Av. Cosme Ferreira, 3937 - Coroado, Manaus - AM"}
 }
