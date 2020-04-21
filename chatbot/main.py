@@ -1,5 +1,5 @@
 from Controller.botController import*
-
+from time import sleep
 # Bot entra em loop
 bot.message_loop({
     "chat": receive_message,
@@ -7,4 +7,5 @@ bot.message_loop({
 })
 
 while True:
+    sleep(2)
     pass

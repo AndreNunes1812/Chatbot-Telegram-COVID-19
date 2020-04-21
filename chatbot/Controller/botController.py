@@ -379,7 +379,6 @@ def send_contatos_alunos_tutores(msg):
 
 
 def send_medidas(msg_id):
-    remove_buttons(msg_id)
     bot.sendMessage(msg_id,
                     "Obrigado por responder!😁\n" +
                     "Não esqueça de:\n\n" +
