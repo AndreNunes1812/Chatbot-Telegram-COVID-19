@@ -25,8 +25,8 @@ import csv
 import re
 
 
-#bot = telepot.Bot('820651983:AAGw5xDAWJ1ILN2IgaP-jVaelhgO_jL6juM')
-bot = telepot.Bot('1208891513:AAGuPrniWVW_MpEfWQt5-5HXuRhnsDPpb2Y')  # teste
+bot = telepot.Bot('820651983:AAGw5xDAWJ1ILN2IgaP-jVaelhgO_jL6juM')
+#bot = telepot.Bot('1208891513:AAGuPrniWVW_MpEfWQt5-5HXuRhnsDPpb2Y')  # teste
 user = {}
 gravidade = 0
 recomendar = False
