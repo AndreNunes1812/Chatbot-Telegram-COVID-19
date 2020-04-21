@@ -3,11 +3,11 @@
 #
 # Membros deste projeto:
 #
-#   Prof. Dr. Fábio Santos da Silva 
+#   Prof. Dr. Fábio Santos da Silva
 #   Erik Atílio Silva Reys
 #   Oscar de Menezes Neto
 #   Ramayna Menezes
-#   Jorge Procópio 
+#   Jorge Procópio
 #   Profa. Mariana Broker
 #   Profa. Waldeyde Magalhães
 #   Profa. Dra Elielza Guerreira
@@ -25,8 +25,8 @@ import csv
 import re
 
 
-bot = telepot.Bot('820651983:AAGw5xDAWJ1ILN2IgaP-jVaelhgO_jL6juM')
-# bot = telepot.Bot('1208891513:AAFzZIbNLnTng_ZecqAjeuBcwCucLXrsjHw')#teste
+#bot = telepot.Bot('820651983:AAGw5xDAWJ1ILN2IgaP-jVaelhgO_jL6juM')
+bot = telepot.Bot('1208891513:AAGuPrniWVW_MpEfWQt5-5HXuRhnsDPpb2Y')  # teste
 user = {}
 gravidade = 0
 recomendar = False
@@ -181,9 +181,13 @@ def on_callback_query(msg):
         bot.answerCallbackQuery(query_id, sub_menu(msg))
     if(query_data == "CRÉDITOS pressed"):
         bot.answerCallbackQuery(query_id, creditos(msg))
+    if(query_data == "MÉDICOS E ENFERMEIRO pressed"):
+        bot.answerCallbackQuery(query_id, send_contatos_medicos_enfermeiros(msg))
+    if(query_data == "ALUNOS E TUTORES pressed"):
+        bot.answerCallbackQuery(query_id, send_contatos_alunos_tutores(msg))
     if(query_data == "VOLTAR pressed"):
         remove_buttons(msg)
-        bot.answerCallbackQuery(query_id, menu_bot_chat(msg))
+        bot.answerCallbackQuery(query_id, menu_bot_chat(msg['message']))
     if(query_data == "PSICOLOGIA pressed"):
         bot.answerCallbackQuery(query_id, psicologia(msg))
     if(query_data == "CRIANÇA pressed"):
@@ -193,15 +197,15 @@ def on_callback_query(msg):
         bot.answerCallbackQuery(query_id, sintomas_user_crianca(msg))
     if(query_data == "NÃO IDADE 5 pressed"):
         remove_buttons(msg)
-        indicacao_user_crianca(msg)
-        send_contato(msg)
+        indicacao_user_crianca(msg['message']['chat']['id'])
+        send_contato(msg['message']['chat']['id'])
     if(query_data == "SIM SINTOMAS CRIANÇA pressed"):
         gravidade += 2
         bot.answerCallbackQuery(query_id, sensacao_user_crianca(msg))
     if(query_data == "NÃO SINTOMAS CRIANÇA pressed"):
         remove_buttons(msg)
-        indicacao_user_crianca(msg)
-        send_contato(msg)
+        indicacao_user_crianca(msg['message']['chat']['id'])
+        send_contato(msg['message']['chat']['id'])
     if((query_data == "SIM SENSAÇÃO CRIANÇA pressed")or(query_data == "NÃO SENSAÇÃO CRIANÇA pressed")):
         if(query_data == "SIM SENSAÇÃO CRIANÇA pressed"):
             gravidade += 2
@@ -223,10 +227,10 @@ def on_callback_query(msg):
                             parse_mode="Markdown")
             bot.answerCallbackQuery(query_id, unidade_user(msg))
         else:
-            remove_buttons(msg)
             user["grau"] = "BAIXO"
-            indicacao_user_crianca(msg)
-            send_contato(msg)
+            remove_buttons(msg)
+            indicacao_user_crianca(msg['message']['chat']['id'])
+            send_contato(msg['message']['chat']['id'])
 
 # TRIAGEM CLINICA GERAL
     if(query_data == "ADULTO pressed"):
@@ -350,12 +354,28 @@ def send_contato(msg_id):
     """ Envia o contato do médico para tirar dúvidas"""
 
     bot.sendMessage(msg_id,
-                    "Caso tenha dúvidas sobre seu atendimento, consulte um 👨‍⚕️ Médico da UEA\npor meio dos contatos telegram abaixo.",
+                    "Caso ainda tenha dúvidas, você pode entrar em contato com nosso time de atendimento 👨‍⚕️👩‍⚕️.\n\nPor meio dos contatos telegram abaixo.",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="MÉDICOS E ENFERMEIRO", callback_data="MÉDICOS E ENFERMEIRO pressed"),
-                         InlineKeyboardButton(text="ALUNOS E TUTORES", callback_data="ALUNOS E TUTORES pressed")]]))
+                            text="MÉDICOS E ENFERMEIROS", callback_data="MÉDICOS E ENFERMEIRO pressed")],
+                         [InlineKeyboardButton(text="ALUNOS E TUTORES", callback_data="ALUNOS E TUTORES pressed")]]))
+
+
+def send_contatos_medicos_enfermeiros(msg):
+    remove_buttons(msg)
+    bot.sendMessage(
+        msg['message']['chat']['id'], text="Lista de contatos de Médicos e Enfermeiros para lhe atender:" +
+        "\n\n[ https://t.me/medicouea ]\n\n[ https://t.me/medicouea ]\n\n[ https://t.me/medicouea ]\n",
+        parse_mode="Markdown")
+
+
+def send_contatos_alunos_tutores(msg):
+    remove_buttons(msg)
+    bot.sendMessage(
+        msg['message']['chat']['id'], text="Lista de contatos de Alunos e Tutores para lhe atender:" +
+        "\n\n[ https://t.me/medicouea ]\n\n[ https://t.me/medicouea ]\n\n[ https://t.me/medicouea ]\n",
+        parse_mode="Markdown")
 
 
 def send_medidas(msg_id):
@@ -368,7 +388,7 @@ def send_medidas(msg_id):
                     "\n*3.* Evite aglomerações se estiver doente 🙂🤒🙂\n" +
                     "\n*4.* Mantenha os ambientes bem ventilados 🖼️🍃\n" +
                     "\n*5.* Não compartilhe objetos pessoais 🙂🍽️😀\n\n" +
-                    "Sair de casa só quando necessário, respeite o período de quarentena por sua saúde e de seu próximo 😁",
+                    "Sair de casa só quando necessário e de máscara 😷, respeite o período de quarentena por sua saúde e de seu próximo 😉👍",
                     parse_mode="Markdown")
 
 
@@ -382,8 +402,8 @@ def menu_bot_chat(msg):
     bot.sendMessage(
         msg['chat']['id'],
         text="ATENÇÃO VERSÃO DE TESTES, NÃO OFICIAL!\n\nSeja Bem-vindo *" + get_user_name(msg) + "*\n" +
-        "\nEu sou o *🤖CovidBot da UEA* e vou realizar a sua *Triagem Virtual.* Para isso irei fazer uma série de perguntas direcionadas.\n" +
-        "\nQuando estiver pronto, aperte em *COMEÇAR* 😁",
+        "\nEu sou o *CovidBot da UEA 👉😁👈* e vou realizar a sua *Triagem Virtual.* Para isso irei fazer uma série de perguntas direcionadas.\n" +
+        "\nQuando estiver pronto, aperte em *COMEÇAR* 😁👍",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="COMEÇAR",
@@ -401,7 +421,7 @@ def menu_bot_chat(msg):
 def sub_menu(msg):
     remove_buttons(msg)
     bot.sendMessage(
-        msg['message']['chat']['id'], text="Qual tipo de triagem você deseja?",
+        msg['message']['chat']['id'], text="Qual tipo de triagem você deseja? 🙂",
         parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="PEDIATRIA",
                                   callback_data="CRIANÇA pressed")],
@@ -416,7 +436,7 @@ def psicologia(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
                     "A *UEA* oferece um *serviço de apoio emocional* por meio de uma equipe de psicólogos." +
-                    "\nPara atendimento acesso *click no link abaixo* que você será redirecionado para o *serviço de atendimento via Whatsapp*.",
+                    "\nPara atendimento acesso *click no link abaixo* que você será redirecionado para o *serviço de atendimento via Whatsapp*.\n\n o link vai estar aqui",
                     parse_mode="Markdown")
 
 
@@ -426,7 +446,7 @@ def creditos(msg):
                     "Segue abaixo o nome das pessoas que participaram no meu desenvolvimento 😊\n\n" +
                     "Prof. Dr. Fábio Santos da Silva\nErik Atilio Silva Rey\nOscar de Menezes Neto\nRamayna Menezes\nJorge Procópio\nProfa. Mariana Broker\nProfa. Waldeyde Magalhães\nProfa. Dra Elielza Guerreira\nProf. Dr. Darlisom Souza",
                     parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                        [InlineKeyboardButton(text="<<< VOLTAR", callback_data="VOLTAR pressed")]]))
+                        [InlineKeyboardButton(text="⬅ VOLTAR", callback_data="VOLTAR pressed")]]))
 
 
 def idade_user_crianca(msg):
@@ -434,8 +454,8 @@ def idade_user_crianca(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 1/3*\n\nA criança tem *menos de 5 anos* de idade? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM IDADE 5 pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO IDADE 5 pressed")]]))
+                            text="✅ SIM", callback_data="SIM IDADE 5 pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO IDADE 5 pressed")]]))
 
 
 def sintomas_user_crianca(msg):
@@ -444,8 +464,8 @@ def sintomas_user_crianca(msg):
                     "*Pergunta 2/3*\n\nA criança tem algum desses sintomas? 🤔" +
                     "\n\n*Febre*\n*Tosse*\n*Dor de garganta*\n*Dificuldade respiratória*\n", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM SINTOMAS CRIANÇA pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO SINTOMAS CRIANÇA pressed")]]))
+                            text="✅ SIM", callback_data="SIM SINTOMAS CRIANÇA pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO SINTOMAS CRIANÇA pressed")]]))
 
 
 def sensacao_user_crianca(msg):
@@ -453,12 +473,12 @@ def sensacao_user_crianca(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 3/3*\n\nA criança apresenta falta de ar, sensação de desmaio?", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM SENSAÇÃO CRIANÇA pressed"),
-                            InlineKeyboardButton(text="NÃO", callback_data="NÃO SENSAÇÃO CRIANÇA pressed")]]))
+                            text="✅ SIM", callback_data="SIM SENSAÇÃO CRIANÇA pressed"),
+                            InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO SENSAÇÃO CRIANÇA pressed")]]))
 
 
-def indicacao_user_crianca(msg):
-    bot.sendMessage(msg['message']['chat']['id'],
+def indicacao_user_crianca(msg_id):
+    bot.sendMessage(msg_id,
                     "Obrigado por responder!😁\n" +
                     "Fique de olho no que deve ser evitado:\n\n" +
                     "*1.* Não chamar coleguinha ou visitas para casa\n" +
@@ -493,8 +513,8 @@ def febre_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 3/12*\n\nVocê está com *Febre*? 🤒", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM FEBRE pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO FEBRE pressed")]]))
+                            text="✅ SIM", callback_data="SIM FEBRE pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO FEBRE pressed")]]))
 
 
 def dor_cabeca_user(msg):
@@ -502,8 +522,8 @@ def dor_cabeca_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 4/12*\n\nVocê está sentindo *Dor de Cabeça*? 😣", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM DOR CABEÇA pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR CABEÇA pressed")]]))
+                            text="✅ SIM", callback_data="SIM DOR CABEÇA pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO DOR CABEÇA pressed")]]))
 
 
 def coriza_user(msg):
@@ -511,8 +531,8 @@ def coriza_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 5/12*\n\nVocê está com algum desses sintomas? 🤔\n\n*Secreção Nasal*\n*Espirros*\n*Perda de Olfato e Paladar*", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM CORIZA pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO CORIZA pressed")]]))
+                            text="✅ SIM", callback_data="SIM CORIZA pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO CORIZA pressed")]]))
 
 
 def dor_garganta_user(msg):
@@ -520,8 +540,8 @@ def dor_garganta_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 6/12*\n\nEstá sentindo *Dor ou Irritação na Garganta*? 🤨", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM DOR NA GARGANTA pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR NA GARGANTA pressed")]]))
+                            text="✅ SIM", callback_data="SIM DOR NA GARGANTA pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO DOR NA GARGANTA pressed")]]))
 
 
 def tosse_user(msg):
@@ -529,8 +549,8 @@ def tosse_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 7/12*\n\nVocê está com *Tosse Seca*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM TOSSE pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO TOSSE pressed")]]))
+                            text="✅ SIM", callback_data="SIM TOSSE pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO TOSSE pressed")]]))
 
 
 def dificuldade_respiratoria_user(msg):
@@ -538,8 +558,8 @@ def dificuldade_respiratoria_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 8/12*\n\nApresenta *Dificuldade Respiratória*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM DIFICULDADE RESPIRATORIA pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DIFICULDADE RESPIRATORIA pressed")]]))
+                            text="✅ SIM", callback_data="SIM DIFICULDADE RESPIRATORIA pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO DIFICULDADE RESPIRATORIA pressed")]]))
 
 
 def dor_no_corpo_user(msg):
@@ -547,8 +567,8 @@ def dor_no_corpo_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 9/12*\n\nVocê está sentindo *Dores no corpo*? 😖", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM DOR NO CORPO pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR NO CORPO pressed")]]))
+                            text="✅ SIM", callback_data="SIM DOR NO CORPO pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO DOR NO CORPO pressed")]]))
 
 
 def diarreia_user(msg):
@@ -556,8 +576,8 @@ def diarreia_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "*Pergunta 10/12*\n\nVocê está sentindo *Diarreia*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM DIARREIA pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DIARREIA pressed")]]))
+                            text="✅ SIM", callback_data="SIM DIARREIA pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO DIARREIA pressed")]]))
 
 
 def peito_user(msg):
@@ -565,8 +585,8 @@ def peito_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "Está se sentindo *Dor no peito*? 🤔", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM DOR NO PEITO pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO DOR NO PEITO pressed")]]))
+                            text="✅ SIM", callback_data="SIM DOR NO PEITO pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO DOR NO PEITO pressed")]]))
 
 
 def historico_user(msg):
@@ -574,8 +594,8 @@ def historico_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
                     "Esteve em contato, nos últimos 14 dias com um caso diagnosticado com COVID-19? 🙁", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="SIM", callback_data="SIM HISTORICO pressed"),
-                         InlineKeyboardButton(text="NÃO", callback_data="NÃO HISTORICO pressed")]]))
+                            text="✅ SIM", callback_data="SIM HISTORICO pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO HISTORICO pressed")]]))
 
 
 def unidade_user(msg):
