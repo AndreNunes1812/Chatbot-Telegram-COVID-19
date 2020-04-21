@@ -421,7 +421,8 @@ def menu_bot_chat(msg):
 def sub_menu(msg):
     remove_buttons(msg)
     bot.sendMessage(
-        msg['message']['chat']['id'], text="Qual tipo de triagem você deseja? 🙂",
+        msg['message']['chat']['id'], text="Se você deseja obter informações sobre covid-19 acesse:\nhttps://coronavirus.saude.gov.br"+
+        "\n\nSe deseja para triagem online e atendimento remoto clique em um dos botões abaixo 🙂:",
         parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="PEDIATRIA",
                                   callback_data="CRIANÇA pressed")],
