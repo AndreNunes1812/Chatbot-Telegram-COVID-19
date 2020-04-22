@@ -44,6 +44,7 @@ fieldnames = [
     "dores_no_corpo",
     "diarreia",
     "dor_no_peito",
+    "contato_suspeito",
     "contato_infectado",
     "grau", "latitude", "longitude"]
 
@@ -181,9 +182,10 @@ def on_callback_query(msg):
         bot.answerCallbackQuery(query_id, sub_menu(msg))
     if(query_data == "CRÉDITOS pressed"):
         bot.answerCallbackQuery(query_id, creditos(msg))
-    if(query_data == "MÉDICOS E ENFERMEIRO pressed"):
-        bot.answerCallbackQuery(query_id, send_contatos_medicos_enfermeiros(msg))
-    if(query_data == "ALUNOS E TUTORES pressed"):
+    if(query_data == "EQUIPE DE SAÚDE pressed"):
+        bot.answerCallbackQuery(
+            query_id, send_contatos_medicos_enfermeiros(msg))
+    if(query_data == "PSICOLÓGOS pressed"):
         bot.answerCallbackQuery(query_id, send_contatos_alunos_tutores(msg))
     if(query_data == "VOLTAR pressed"):
         remove_buttons(msg)
@@ -315,6 +317,13 @@ def on_callback_query(msg):
     if((query_data == "SIM HISTORICO pressed")or(query_data == "NÃO HISTORICO pressed")):
         if(query_data == "SIM HISTORICO pressed"):
             gravidade += 10
+            user["contato_suspeito"] = "sim"
+        else:
+            user["contato_suspeito"] = "nao"
+        bot.answerCallbackQuery(query_id, historico02_user(msg))
+    if((query_data == "SIM HISTORICO02 pressed")or(query_data == "NÃO HISTORICO02 pressed")):
+        if(query_data == "SIM HISTORICO02 pressed"):
+            gravidade += 10
             user["contato_infectado"] = "sim"
         else:
             user["contato_infectado"] = "nao"
@@ -333,10 +342,12 @@ def on_callback_query(msg):
         if((gravidade >= 10) and (gravidade <= 19)):
             user["grau"] = "MEDIO"
             recomendar = True
+            send_contato(msg['message']['chat']['id'])
             bot.answerCallbackQuery(query_id, unidade_user(msg))
-        if((gravidade >= 20) and (gravidade <= 36)):
+        if((gravidade >= 20) and (gravidade <= 46)):
             user["grau"] = "ALTO"
             recomendar = True
+            send_contato(msg['message']['chat']['id'])
             bot.answerCallbackQuery(query_id, unidade_user(msg))
     else:
         pass
@@ -358,8 +369,8 @@ def send_contato(msg_id):
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
-                            text="MÉDICOS E ENFERMEIROS", callback_data="MÉDICOS E ENFERMEIRO pressed")],
-                         [InlineKeyboardButton(text="ALUNOS E TUTORES", callback_data="ALUNOS E TUTORES pressed")]]))
+                            text="EQUIPE DE SAÚDE", callback_data="EQUIPE DE SAÚDE pressed")],
+                        [InlineKeyboardButton(text="PSICOLÓGOS", callback_data="PSICOLÓGOS pressed")]]))
 
 
 def send_contatos_medicos_enfermeiros(msg):
@@ -420,7 +431,7 @@ def menu_bot_chat(msg):
 def sub_menu(msg):
     remove_buttons(msg)
     bot.sendMessage(
-        msg['message']['chat']['id'], text="Se você deseja obter informações sobre covid-19 acesse:\nhttps://coronavirus.saude.gov.br"+
+        msg['message']['chat']['id'], text="Se você deseja obter informações sobre covid-19 acesse:\nhttps://coronavirus.saude.gov.br" +
         "\n\nSe deseja para triagem online e atendimento remoto clique em um dos botões abaixo 🙂:",
         parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="PEDIATRIA",
@@ -444,7 +455,15 @@ def creditos(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
                     "Segue abaixo o nome das pessoas que participaram no meu desenvolvimento 😊\n\n" +
-                    "Prof. Dr. Fábio Santos da Silva\nErik Atilio Silva Rey\nOscar de Menezes Neto\nRamayna Menezes\nJorge Procópio\nProfa. Mariana Broker\nProfa. Waldeyde Magalhães\nProfa. Dra Elielza Guerreira\nProf. Dr. Darlisom Souza",
+                    "Prof. Dr. Fábio Santos da Silva"+
+                    "\nErik Atilio Silva Rey"+
+                    "\nOscar de Menezes Neto"+
+                    "\nRamayna Menezes"+
+                    "\nJorge Procópio"+
+                    "\nProfa. Mariana Broker"+
+                    "\nProfa. Waldeyde Magalhães"+
+                    "\nProfa. Dra Elielza Guerreiro Menezes"+
+                    "\nProf. Dr. Darlisom Sousa Ferreira",
                     parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text="⬅ VOLTAR", callback_data="VOLTAR pressed")]]))
 
@@ -592,10 +611,19 @@ def peito_user(msg):
 def historico_user(msg):
     remove_buttons(msg)
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Esteve em contato, nos últimos 14 dias com um caso diagnosticado com COVID-19? 🙁", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    "Esteve em contato próximo de caso suspeito para o coronavírus (COVID-19), nos últimos 14 dias anteriores ao aparecimento dos sinais ou sintomas? 🙁", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(
                             text="✅ SIM", callback_data="SIM HISTORICO pressed"),
                          InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO HISTORICO pressed")]]))
+
+
+def historico02_user(msg):
+    remove_buttons(msg)
+    bot.sendMessage(msg['message']['chat']['id'],
+                    "Esteve em contato próximo de caso confirmado de coronavírus (COVID-19) em laboratório, nos últimos 14 dias anteriores ao aparecimento dos sinais ou sintomas? 🙁", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="✅ SIM", callback_data="SIM HISTORICO02 pressed"),
+                         InlineKeyboardButton(text="❌ NÃO", callback_data="NÃO HISTORICO02 pressed")]]))
 
 
 def unidade_user(msg):
