@@ -208,7 +208,6 @@ def on_callback_query(msg):
         user["grau"] = "BAIXO"
         remove_buttons(msg)
         indicacao_user_crianca(msg['message']['chat']['id'])
-        send_contato(msg['message']['chat']['id'])
     if(query_data == "SIM SINTOMAS CRIANÇA pressed"):
         gravidade += 2
         bot.answerCallbackQuery(query_id, sensacao_user_crianca(msg))
@@ -216,7 +215,6 @@ def on_callback_query(msg):
         user["grau"] = "BAIXO"
         remove_buttons(msg)
         indicacao_user_crianca(msg['message']['chat']['id'])
-        send_contato(msg['message']['chat']['id'])
     if((query_data == "SIM SENSAÇÃO CRIANÇA pressed")or(query_data == "NÃO SENSAÇÃO CRIANÇA pressed")):
         if(query_data == "SIM SENSAÇÃO CRIANÇA pressed"):
             remove_buttons(msg)
@@ -242,7 +240,6 @@ def on_callback_query(msg):
             user["grau"] = "BAIXO"
             remove_buttons(msg)
             indicacao_user_crianca(msg['message']['chat']['id'])
-            send_contato(msg['message']['chat']['id'])
 
 # TRIAGEM CLINICA GERAL
     if(query_data == "ADULTO pressed"):
