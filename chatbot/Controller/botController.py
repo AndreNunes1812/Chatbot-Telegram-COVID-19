@@ -424,8 +424,8 @@ def menu_bot_chat(msg):
 
     bot.sendMessage(
         msg['chat']['id'],
-        text="ATENÇÃO VERSÃO DE TESTES, NÃO OFICIAL!\n\nSeja Bem-vindo *" + get_user_name(msg) + "*\n" +
-        "\nEu sou o *CovidBot da UEA 👉😁👈* e vou realizar a sua *Triagem Virtual.* Para isso irei fazer uma série de perguntas direcionadas.\n" +
+        text="Seja Bem-vindo *" + get_user_name(msg) + "*\n" +
+        "\nEu sou o *CovidBot 👉😁👈* e vou realizar a sua *Triagem Virtual.* Para isso irei fazer uma série de perguntas direcionadas.\n" +
         "\nQuando estiver pronto, aperte em *COMEÇAR* 😁👍",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
