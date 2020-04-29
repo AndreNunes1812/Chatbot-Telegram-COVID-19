@@ -471,12 +471,7 @@ def creditos(msg):
                     "Prof. Dr. Fábio Santos da Silva" +
                     "\nErik Atilio Silva Rey" +
                     "\nOscar de Menezes Neto" +
-                    "\nRamayna Menezes" +
-                    "\nJorge Procópio" +
-                    "\nProfa. Mariana Broker" +
-                    "\nProfa. Waldeyde Magalhães" +
-                    "\nProfa. Dra Elielza Guerreiro Menezes" +
-                    "\nProf. Dr. Darlisom Sousa Ferreira",
+                    "\nRamayana Menezes",
                     parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text="⬅ VOLTAR", callback_data="VOLTAR pressed")]]))
 
