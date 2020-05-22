@@ -86,6 +86,8 @@ def recomendar_unidade(msg_id, location_user, base):
         foursquare_id=None
     )
 
+    bot.sendMessage(msg_id, "Poderia me avaliar 🥺?\n\nhttps://forms.gle/iVhCqz671JiCdrEy6")
+
 
 def append_dict_as_row(file_name, dict_of_elem, field_names):
     # Open file in append mode
