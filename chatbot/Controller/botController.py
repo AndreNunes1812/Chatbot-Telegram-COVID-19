@@ -407,6 +407,7 @@ def send_contatos_alunos_tutores(msg):
 def send_medidas(msg_id):
     bot.sendMessage(msg_id,
                     "Obrigado por responder!😁\n" +
+                    "Seu grau de risco é: "+user['grau']+
                     "Não esqueça de:\n\n" +
                     "*1.* Lave bem as mãos com água e sabão 🤲🧼🚰 (ou use álcool e gel 👏🧴)\n" +
                     "\n*2.* Cubra nariz e boca ao espirrar e tossir 🤧😣💦\n" +
@@ -647,7 +648,7 @@ def historico02_user(msg):
 
 def unidade_user(msg):
     bot.sendMessage(msg['message']['chat']['id'],
-                    "Obrigado por responder!\nAgora permita-me encontrar a unidade atendimento perto de você 😁",
+                    "Obrigado por responder!\nSeu grau de risco é: "+user['grau']+"\nAgora permita-me encontrar a unidade atendimento perto de você 😁",
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text="BUSCAR UNIDADE MAIS PRÓXIMA",
                                               callback_data="UNIDADE MAIS PROXIMA pressed")]]))
